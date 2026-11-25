@@ -130,11 +130,14 @@ export function prepareLoadedProfileSettings(
   })
   const visibleTaskProvidersDefaultedForJira =
     parsed.settings?.visibleTaskProvidersDefaultedForJira === true
-  const migratedVisibleTaskProviders = visibleTaskProvidersDefaultedForJira
-    ? rawTaskProviderSettings.visibleTaskProviders
-    : rawTaskProviderSettings.visibleTaskProviders.includes('jira')
-      ? rawTaskProviderSettings.visibleTaskProviders
-      : [...rawTaskProviderSettings.visibleTaskProviders, 'jira' as const]
+  const visibleTaskProvidersDefaultedForAzureDevOps =
+    parsed.settings?.visibleTaskProvidersDefaultedForAzureDevOps === true
+  // Why: a provider added after a profile saved its list stays hidden unless shown once.
+  const migratedVisibleTaskProviders = [
+    ...rawTaskProviderSettings.visibleTaskProviders,
+    ...(visibleTaskProvidersDefaultedForJira ? [] : ['jira' as const]),
+    ...(visibleTaskProvidersDefaultedForAzureDevOps ? [] : ['azure-devops' as const])
+  ].filter((provider, index, all) => all.indexOf(provider) === index)
   const taskProviderSettings = normalizeTaskProviderSettings({
     visibleTaskProviders: migratedVisibleTaskProviders,
     defaultTaskSource: rawTaskProviderSettings.defaultTaskSource
@@ -155,7 +158,7 @@ export function prepareLoadedProfileSettings(
   if (migratePrimarySelectionPlatformDefault || stampPrimarySelectionTerminalDefaults) {
     markNeedsSave()
   }
-  if (!visibleTaskProvidersDefaultedForJira) {
+  if (!visibleTaskProvidersDefaultedForJira || !visibleTaskProvidersDefaultedForAzureDevOps) {
     markNeedsSave()
   }
   const claudeAgentTeamsDefaultDisabledMigrated =

@@ -8,6 +8,7 @@ type TaskSelectionSettings = Pick<
   | 'defaultTaskSource'
   | 'visibleTaskProviders'
   | 'visibleTaskProvidersDefaultedForJira'
+  | 'visibleTaskProvidersDefaultedForAzureDevOps'
   | 'defaultRepoSelection'
   | 'defaultLinearTeamSelection'
   | keyof typeof DEFAULT_AZURE_DEVOPS_BOARDS_SETTINGS
@@ -19,6 +20,7 @@ export const DEFAULT_TASK_SELECTION_SETTINGS: TaskSelectionSettings = {
   defaultTaskSource: 'github',
   visibleTaskProviders: [...TASK_PROVIDERS],
   visibleTaskProvidersDefaultedForJira: true,
+  visibleTaskProvidersDefaultedForAzureDevOps: true,
   defaultRepoSelection: null,
   defaultLinearTeamSelection: null,
   ...DEFAULT_AZURE_DEVOPS_BOARDS_SETTINGS
