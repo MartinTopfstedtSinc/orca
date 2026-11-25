@@ -46,6 +46,7 @@ import { createWebJiraApi } from './preload-api/jira/web-jira-api'
 import { callRuntimeResult } from './runtime/client/web-runtime-calls'
 import { createWebRuntimeApi } from './preload-api/runtime/web-runtime-api'
 import { createRuntimeEnvironmentsApi } from './preload-api/runtime/web-runtime-environments-api'
+import { createWebCheWorkspacesApi } from './preload-api/runtime/web-che-workspaces-api'
 import { webRuntimeState } from './runtime/client/web-runtime-session'
 import { createWebSettingsApi } from './preload-api/preferences/web-settings-api'
 import { createShellApi } from './preload-api/browser/web-shell-api'
@@ -93,6 +94,7 @@ function createWebPreloadApi(): Omit<Partial<PreloadApi>, 'settings' | 'plugins'
     nativeChat: createWebNativeChatApi(),
     speech: createWebSpeechApi(),
     runtimeEnvironments: createRuntimeEnvironmentsApi(),
+    ephemeralVm: createWebCheWorkspacesApi(),
     repos: createReposApi(),
     worktrees: createWorktreesApi(),
     fs: createFileApi(),

@@ -30,6 +30,14 @@ export function classifyRuntimeLongPoll(request: RpcRequest): RuntimeLongPollCla
   ) {
     return 'wait'
   }
+  // Che DevWorkspace lifecycle calls wait for the cluster to start or stop a pod.
+  if (
+    request.method === 'cheWorkspace.provision' ||
+    request.method === 'cheWorkspace.suspendWorkspace' ||
+    request.method === 'cheWorkspace.resumeWorkspace'
+  ) {
+    return 'wait'
+  }
   // Worker readiness plus prompt verification can take 90–110s; keep Unix and Windows pipe connections alive.
   if (request.method === 'orchestration.workerStart') {
     return 'wait'

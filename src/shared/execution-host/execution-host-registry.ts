@@ -42,7 +42,12 @@ function setHost(
     return
   }
   // Health upgrades must retain the first friendly label/source seeded before id-only fallbacks.
-  hosts.set(entry.id, { ...entry, label: existing.label, source: existing.source ?? entry.source })
+  hosts.set(entry.id, {
+    ...entry,
+    label: existing.label,
+    detail: existing.detail,
+    source: existing.source ?? entry.source
+  })
 }
 
 function addRuntimeHost(
@@ -87,7 +92,7 @@ function addRuntimeHost(
     id: hostId,
     kind: 'runtime',
     label,
-    detail: 'Orca server',
+    detail: source === 'ephemeral-vm' ? 'Agent environment' : 'Orca server',
     health,
     ...(blockedReason ? { blockedReason } : {}),
     compatibility: compatibility ?? undefined,

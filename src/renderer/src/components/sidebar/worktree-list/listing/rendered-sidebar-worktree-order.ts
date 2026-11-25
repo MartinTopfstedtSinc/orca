@@ -39,6 +39,7 @@ import {
 } from '../../../../../../shared/sidebar-list/hosts/host-filtering'
 import { selectWorkspaceBoardStatuses } from '@/store/workspaces/status/host-workspace-status-columns'
 import { indexHiddenProjects } from '../../../../../../shared/project/catalog/hidden-projects'
+import { hasAgentEnvironments, hideAgentPrimaryWorktrees } from './agent-primary-workspaces'
 
 const EMPTY_REPO_ID_SET: ReadonlySet<string> = Object.freeze(new Set<string>())
 const EMPTY_IMPORTED_BY_REPO: ReadonlyMap<string, ImportedWorktreesCardCandidate> = new Map()
@@ -80,7 +81,12 @@ export function computeRenderedSidebarRows(
   const rows = planSidebarRows({
     groupBy: state.groupBy,
     sortBy: state.sortBy,
-    worktrees: [...visibleWorktrees],
+    worktrees: hideAgentPrimaryWorktrees(
+      visibleWorktrees,
+      repoMap,
+      state.runtimeEnvironments,
+      defaultHostId
+    ),
     repoMap,
     prGroupOf: createSidebarPRGroupReader(repoMap, prCache),
     repoOrder: getLogicalRepoOrderRankById(state.repos.map((repo) => repo.id)),
@@ -115,8 +121,11 @@ export function computeRenderedSidebarRows(
   }).render(state.collapsedGroups)
 
   // Build the host registry only when sections may affect order; zero/one-host cases still safely no-op.
+  const agentEnvironments = hasAgentEnvironments(state.runtimeEnvironments)
   const needsHostSections =
-    state.workspaceHostScope !== ALL_EXECUTION_HOSTS_SCOPE || state.visibleWorkspaceHostIds != null
+    agentEnvironments ||
+    state.workspaceHostScope !== ALL_EXECUTION_HOSTS_SCOPE ||
+    state.visibleWorkspaceHostIds != null
   return needsHostSections
     ? addHostSectionRows({
         rows,
@@ -138,7 +147,7 @@ export function computeRenderedSidebarRows(
         localHostLabel: getLocalExecutionHostLabel(),
         collapsedHostKeys: state.collapsedGroups,
         forceCollapseHosts: false,
-        preferProjectGrouping: true
+        preferProjectGrouping: !agentEnvironments
       })
     : rows
 }

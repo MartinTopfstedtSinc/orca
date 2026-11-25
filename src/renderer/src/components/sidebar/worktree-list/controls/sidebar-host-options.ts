@@ -49,6 +49,7 @@ export type SidebarHostOption = {
   label: string
   isDefaultLocalLabel?: boolean
   detail: string
+  source?: PublicKnownRuntimeEnvironment['source']
   kind: 'local' | 'ssh' | 'runtime'
   health: ExecutionHostHealth
   presence: 'local' | 'configured' | 'project' | 'active'

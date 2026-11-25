@@ -17,6 +17,7 @@ import {
   type StoredWebRuntimeEnvironment
 } from '../../pairing/web-runtime-environment'
 import { webRuntimeCredentialFor } from './web-runtime-credentials'
+import { cheEnvironments } from './web-che-environments'
 
 import { translate } from '@/i18n/i18n'
 
@@ -52,8 +53,11 @@ export function subscribeWebRuntimeStatus(
   }
 }
 export function readWebRuntimeStatusSnapshots(): RuntimeHostStatusSnapshot[] {
-  const snapshot = webRuntimeState.activeClient?.statusOwner?.read()
-  return snapshot ? [snapshot] : []
+  return [webRuntimeState.activeClient, ...[...cheClients.values()].map((entry) => entry.client)]
+    .flatMap((client) => {
+      const snapshot = client?.statusOwner?.read()
+      return snapshot ? [snapshot] : []
+    })
 }
 export async function observeWebRuntimeStatus(
   selector: string,
@@ -64,7 +68,12 @@ export async function observeWebRuntimeStatus(
   if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
     return manuallyDisconnectedResponse(environment)
   }
-  const existing = webRuntimeState.activeClient?.statusOwner
+  const existing = (
+    cheClients.get(environment.id)?.client ??
+    (webRuntimeState.activeClientEnvironmentId === environment.id
+      ? webRuntimeState.activeClient
+      : null)
+  )?.statusOwner
   if (existing) {
     return existing.refresh({ timeoutMs, observeOnly: true, ...(force ? { force } : {}) })
   }
@@ -89,11 +98,56 @@ export function invalidateRuntimeWorktreeCaches(): void {
   webRuntimeState.cachedDetectedWorktrees = null
 }
 
+// Agent environments stay connected alongside the controller, keyed by environment id.
+const cheClients = new Map<string, { client: WebRuntimeClient; pairingRevision: number }>()
+
+export function closeCheRuntimeClients(environmentId?: string): void {
+  for (const [id, { client }] of cheClients) {
+    if (environmentId && id !== environmentId) {
+      continue
+    }
+    client.close()
+    cheClients.delete(id)
+  }
+}
+
+function getCheClient(environment: StoredWebRuntimeEnvironment): WebRuntimeClient {
+  // Waking an environment refreshes its pairing, which bumps the revision.
+  const pairingRevision = pairingRevisionOf(environment)
+  const existing = cheClients.get(environment.id)
+  if (existing?.pairingRevision === pairingRevision) {
+    return existing.client
+  }
+  closeCheRuntimeClients(environment.id)
+  const client = new WebRuntimeClient(getPreferredWebRuntimeConnection(environment), {
+    // The controlling server owns this pairing, so the browser never rewrites or forgets it.
+    credential: webRuntimeCredentialFor(environment, {
+      forgetStoredToken: () => {},
+      forgetPairing: () => {}
+    }),
+    status: {
+      environmentId: environment.id,
+      pairingRevision,
+      publish: (snapshot) => {
+        for (const listener of statusListeners) {
+          listener(snapshot)
+        }
+      },
+      verified: (response) => updateEnvironmentFromResponse(environment, response)
+    }
+  })
+  cheClients.set(environment.id, { client, pairingRevision })
+  return client
+}
+
 export function getClientForEnvironment(
   environment: StoredWebRuntimeEnvironment
 ): WebRuntimeClient {
   if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
     throw new Error('runtime_manually_disconnected')
+  }
+  if (cheEnvironments.has(environment.id)) {
+    return getCheClient(environment)
   }
   // Why: a request captured before a re-pair must not reopen a client with the replaced token.
   if (!isActivePairing(environment)) {
@@ -147,6 +201,7 @@ function credentialFor(environment: StoredWebRuntimeEnvironment) {
 }
 
 export function closeActiveRuntimeClients(): void {
+  closeCheRuntimeClients()
   webRuntimeState.activeClient?.close()
   webRuntimeState.activeClient = null
   webRuntimeState.activeClientEnvironmentId = null
@@ -159,6 +214,7 @@ export function disconnectActiveRuntimeEnvironment(): void {
 
 export function removeActiveRuntimeEnvironment(): void {
   disconnectActiveRuntimeEnvironment()
+  cheEnvironments.clear()
   clearStoredWebRuntimeEnvironment()
   webRuntimeState.activeEnvironment = null
 }
@@ -187,6 +243,12 @@ export function resolveEnvironment(selector: string): StoredWebRuntimeEnvironmen
   }
   if (environment.compatibleEnvironmentIds?.includes(selector)) {
     return environment
+  }
+  const child = [...cheEnvironments.values()].find(
+    (entry) => entry.id === selector || entry.name === selector
+  )
+  if (child) {
+    return child
   }
   throw new Error(`Unknown Orca runtime environment: ${selector}`)
 }
@@ -230,6 +292,13 @@ export function updateEnvironmentFromResponse(
   environment: StoredWebRuntimeEnvironment,
   response: RuntimeRpcResponse<unknown>
 ): void {
+  const child = cheEnvironments.get(environment.id)
+  if (child) {
+    if (response.ok) {
+      cheEnvironments.set(child.id, { ...child, runtimeId: response._meta.runtimeId })
+    }
+    return
+  }
   const active = webRuntimeState.activeEnvironment
   if (!active || !isActivePairing(environment)) {
     return

@@ -49,6 +49,7 @@ export type PrepareEphemeralVmWorkspaceTargetResult =
       ok: false
       error: string
       stderr: string
+      fallback?: boolean
     }
 
 export async function prepareEphemeralVmWorkspaceTarget(
@@ -64,7 +65,12 @@ export async function prepareEphemeralVmWorkspaceTarget(
     ...(args.provisionId ? { provisionId: args.provisionId } : {})
   })
   if (!provisioned.ok) {
-    return { ok: false, error: ephemeralVmErrorText(provisioned), stderr: provisioned.stderr }
+    return {
+      ok: false,
+      error: ephemeralVmErrorText(provisioned),
+      stderr: provisioned.stderr,
+      ...(provisioned.fallback ? { fallback: true } : {})
+    }
   }
 
   const checkoutMode = getEphemeralVmRecipeResultCheckoutMode(provisioned.runtime.recipeResult)

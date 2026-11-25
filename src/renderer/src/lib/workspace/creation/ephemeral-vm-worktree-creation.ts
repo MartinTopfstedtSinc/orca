@@ -80,6 +80,24 @@ async function prepareEphemeralVmRecipeRequest(
     if (!useAppStore.getState().pendingWorktreeCreations[creationId]) {
       return null
     }
+    if (preparedTarget.fallback) {
+      // Why: no environment was created, so the source host can still own the workspace.
+      const localRequest: WorktreeCreationRequest = { ...request, ephemeralVmRecipe: undefined }
+      appendProvisioningLog(
+        creationId,
+        `Agent environment unavailable: ${preparedTarget.error}
+Creating the workspace here instead.
+`
+      )
+      toast.info('Creating the workspace here: an agent environment is not available.', {
+        description: preparedTarget.error
+      })
+      useAppStore.getState().updatePendingWorktreeCreation(creationId, {
+        phase: 'fetching',
+        request: localRequest
+      })
+      return localRequest
+    }
     useAppStore.getState().updatePendingWorktreeCreation(creationId, {
       status: 'error',
       error: preparedTarget.error

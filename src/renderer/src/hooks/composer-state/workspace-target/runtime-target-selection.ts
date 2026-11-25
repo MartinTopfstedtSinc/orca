@@ -255,7 +255,10 @@ export function useComposerRuntimeTargetSelection(input: ComposerRuntimeTargetSe
   const selectedRecipeRepoConnectionId = selectedRepo?.connectionId ?? null
 
   // Only probe enabled experiments or hidden features can raise setup errors.
-  const ephemeralVmsEnabled = settings?.experimentalEphemeralVms === true
+  // The web client's only recipe is the server-managed Che DevWorkspace, which needs no toggle.
+  const ephemeralVmsEnabled =
+    settings?.experimentalEphemeralVms === true ||
+    (window as Window & { __ORCA_WEB_CLIENT__?: boolean }).__ORCA_WEB_CLIENT__ === true
 
   const {
     recipes: ephemeralVmRecipes,

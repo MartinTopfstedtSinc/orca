@@ -42,6 +42,7 @@ import {
   createSidebarHostLabelsSelector
 } from '../controls/sidebar-host-options'
 import { selectPendingWorktreeCreationKeys } from './pending-worktree-creation-keys'
+import { hasAgentEnvironments, hideAgentPrimaryWorktrees } from './agent-primary-workspaces'
 import { selectEphemeralVmHostLifecycles } from '@/store/slices/ephemeral-vm/ephemeral-vm-lifecycle'
 
 function createSidebarHostOptionsSelector() {
@@ -92,7 +93,12 @@ function createSidebarHostOptionsSelector() {
 }
 
 export function useSidebarSectionRows(args: SectionRowsArgs) {
-  const { repos, worktrees, repoMap, defaultHostId } = args
+  const { repos, worktrees: allWorktrees, repoMap, defaultHostId } = args
+  const runtimeEnvironments = useAppStore((s) => s.runtimeEnvironments)
+  const worktrees = useMemo(
+    () => hideAgentPrimaryWorktrees(allWorktrees, repoMap, runtimeEnvironments, defaultHostId),
+    [allWorktrees, repoMap, runtimeEnvironments, defaultHostId]
+  )
   const lineageParentIdentities = useAppStoreWithHostStatuses(selectSidebarLineageParentIdentities)
   const workspaceHostOrder = useAppStore((s) => s.workspaceHostOrder)
   const setWorkspaceHostOrder = useAppStore((s) => s.setWorkspaceHostOrder)
@@ -256,8 +262,8 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
       localHostLabel: getLocalExecutionHostLabel(),
       collapsedHostKeys: effectiveCollapsedGroups,
       forceCollapseHosts: hostDragActive,
-      // Why: projects/workspaces are the primary sidebar object; host sections are only an explicit host-filter view.
-      preferProjectGrouping: true
+      // Agent environments get their own collapsible host sections.
+      preferProjectGrouping: !hasAgentEnvironments(runtimeEnvironments)
     })
     return hostScopedGroups
       ? scopeHostSectionCollapse({
@@ -273,6 +279,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
     hostDragActive,
     hostScopedGroups,
     orderedHostOptions,
+    runtimeEnvironments,
     rows
   ])
   const renderedSidebarRowKeys = useMemo(
