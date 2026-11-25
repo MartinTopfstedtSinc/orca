@@ -70,6 +70,8 @@ export function getStoredSettings(): GlobalSettings {
       stored.terminalCustomThemes !== migratedStored.terminalCustomThemes ||
       stored.terminalColorOverridesSplit !== migratedStored.terminalColorOverridesSplit ||
       stored.uiLanguage !== migratedStored.uiLanguage ||
+      stored.visibleTaskProvidersDefaultedForAzureDevOps !==
+        migratedStored.visibleTaskProvidersDefaultedForAzureDevOps ||
       stored.pluginAppThemeLight !== migratedStored.pluginAppThemeLight ||
       stored.pluginAppThemeDark !== migratedStored.pluginAppThemeDark ||
       stored.experimentalAppRail !== migratedStored.experimentalAppRail ||

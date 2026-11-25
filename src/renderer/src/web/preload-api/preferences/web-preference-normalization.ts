@@ -46,7 +46,29 @@ export function migrateStoredWebSettings(
     terminalCustomThemes: normalizeTerminalCustomThemes(stored.terminalCustomThemes),
     ...splitLegacyTerminalColorOverrides(stored),
     ...migratePortugueseUiLanguageOnLoad(stored),
+    ...showAzureDevOpsTaskSourceOnce(stored),
     ...(hasLegacyMatchTerminalSidebar(stored) ? syncLegacyMatchTerminalSidebar(stored, true) : {})
+  }
+}
+
+/**
+ * A browser that saved its task sources before Azure DevOps existed keeps them in its own
+ * storage, so the host profile migration never reaches it. Show the source once; a later
+ * choice in Settings stamps the guard and stays.
+ */
+function showAzureDevOpsTaskSourceOnce(
+  stored: Partial<GlobalSettings>
+): Pick<GlobalSettings, 'visibleTaskProvidersDefaultedForAzureDevOps'> &
+  Partial<Pick<GlobalSettings, 'visibleTaskProviders'>> {
+  if (stored.visibleTaskProvidersDefaultedForAzureDevOps === true) {
+    return { visibleTaskProvidersDefaultedForAzureDevOps: true }
+  }
+  const saved = stored.visibleTaskProviders
+  return {
+    visibleTaskProvidersDefaultedForAzureDevOps: true,
+    ...(Array.isArray(saved) && !saved.includes('azure-devops')
+      ? { visibleTaskProviders: [...saved, 'azure-devops'] }
+      : {})
   }
 }
 

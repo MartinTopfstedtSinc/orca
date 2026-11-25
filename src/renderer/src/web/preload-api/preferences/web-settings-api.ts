@@ -66,6 +66,9 @@ export function createWebSettingsApi(): Pick<Partial<PreloadApi>, 'agentAwake'> 
             )
           )
         }
+        if ('visibleTaskProviders' in sanitizedUpdates) {
+          sanitizedUpdates.visibleTaskProvidersDefaultedForAzureDevOps = true
+        }
         if ('autoRenameBranchFromWorkDefaultedOn' in sanitizedUpdates) {
           sanitizedUpdates.autoRenameBranchFromWorkDefaultedOn = true
         }
