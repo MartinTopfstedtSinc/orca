@@ -102,6 +102,7 @@ function createWebPreloadApi(): Omit<Partial<PreloadApi>, 'settings' | 'plugins'
     gh: createGitHubApi(),
     gl: createGitLabApi(),
     hostedReview: createRuntimeNamespaceApi('hostedReview'),
+    azureDevOpsBoards: createRuntimeNamespaceApi('azureDevOpsBoards'),
     linear: createRuntimeNamespaceApi('linear'),
     jira: createWebJiraApi(),
     hooks: createHooksApi(),

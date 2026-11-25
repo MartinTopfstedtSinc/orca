@@ -48,6 +48,7 @@ import { GIT_METHODS } from './source-control/git/git'
 import { GITHUB_METHODS } from './source-control/github/github'
 import { GITLAB_METHODS } from './source-control/gitlab/gitlab'
 import { HOSTED_REVIEW_METHODS } from './source-control/reviews/hosted-review'
+import { AZURE_DEVOPS_BOARDS_METHODS } from './source-control/azure-devops/azure-devops-boards'
 import { LINEAR_METHODS } from './integrations/linear/linear'
 import { LINEAR_AGENT_ACCESS_METHODS } from './integrations/linear/linear-agent-access'
 import { JIRA_METHODS } from './integrations/jira/jira'
@@ -237,6 +238,7 @@ const SERVICE_RPC_METHODS = [
   ...GITHUB_METHODS,
   ...GITLAB_METHODS,
   ...HOSTED_REVIEW_METHODS,
+  ...AZURE_DEVOPS_BOARDS_METHODS,
   ...LINEAR_METHODS,
   ...LINEAR_AGENT_ACCESS_METHODS,
   ...JIRA_METHODS,

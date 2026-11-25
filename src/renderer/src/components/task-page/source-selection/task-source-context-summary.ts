@@ -57,8 +57,6 @@ export type RepoBackedTaskSourceSummaryArgs = {
   selectedRepoCount?: number
 }
 
-export { getTaskSourceContextSummary } from './task-source-context-summary-by-provider'
-
 export function getTaskSourceAvailabilityNotice(
   args: {
     providerLabel: string

@@ -8,7 +8,9 @@ import {
 
 const REQUEST_TIMEOUT_MS = 5000
 // Newest first: older on-prem Servers reject newer versions with VssVersionOutOfRangeException.
-const API_VERSIONS: readonly string[] = ['7.1', '6.1', '5.1']
+// Each Server release tops out at one version (2022: 7.0, 2020: 6.0, 2019: 5.0), so the
+// list steps through every one rather than skipping past what a server supports.
+const API_VERSIONS: readonly string[] = ['7.1', '7.0', '6.1', '6.0', '5.1', '5.0']
 // Each retry either lowers the version or adds -preview once, so this bounds negotiation.
 export const AZURE_DEVOPS_MAX_REQUEST_ATTEMPTS = API_VERSIONS.length + 1
 
@@ -158,7 +160,23 @@ export function resolveAzureDevOpsGitApiBaseUrl(repo: AzureDevOpsRepoRef): strin
   }
   const normalized = normalizeAzureDevOpsApiBaseUrl(configured)
   // Git endpoints need the remote's project path, even when auth probes use a collection URL.
-  return isUrlPathAncestor(normalized, repo.apiBaseUrl) ? repo.apiBaseUrl : normalized
+  if (isUrlPathAncestor(normalized, repo.apiBaseUrl)) {
+    return repo.apiBaseUrl
+  }
+  // Why: a server whose remote does not name its web URL (an SSH clone, or a proxy) is
+  // configured by its collection URL, and project and team routes live under the project.
+  return lastUrlSegment(normalized)?.toLowerCase() === repo.project.toLowerCase()
+    ? normalized
+    : `${normalized}/${encodeURIComponent(repo.project)}`
+}
+
+function lastUrlSegment(value: string): string | null {
+  try {
+    const segment = new URL(value).pathname.replace(/\/+$/, '').split('/').at(-1)
+    return segment ? decodeURIComponent(segment) : null
+  } catch {
+    return null
+  }
 }
 
 function apiUrl(

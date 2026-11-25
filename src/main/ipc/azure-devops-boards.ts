@@ -1,35 +1,11 @@
 import { resolve } from 'node:path'
 import { ipcMain } from 'electron'
-import type {
-  AzureDevOpsAssignedWorkItemsPage,
-  AzureDevOpsBacklogLevel,
-  AzureDevOpsBacklogPage,
-  AzureDevOpsBoardPage,
-  AzureDevOpsTeam,
-  AzureDevOpsTeamConfiguration,
-  AzureDevOpsWorkItemDetail
-} from '../../shared/azure-devops/boards-types'
-import {
-  AZURE_DEVOPS_REMOTE_REQUIRED_ERROR,
-  AZURE_DEVOPS_REPO_UNVERIFIABLE_ERROR,
-  azureDevOpsTeamRouteSegment,
-  type AzureDevOpsBoardsRepoArgs,
-  type AzureDevOpsTeamRoute
-} from '../../shared/azure-devops/boards-repo-resolution'
+import type { AzureDevOpsBoardsRepoArgs } from '../../shared/azure-devops/boards-repo-resolution'
 import type { Repo } from '../../shared/repository/repo-types'
-import { loadAzureDevOpsAssignedWorkItems } from '../azure-devops/boards/assigned-work-items-client'
-import { loadAzureDevOpsBacklogPage } from '../azure-devops/boards/backlog-client'
-import { loadAzureDevOpsBoardPage } from '../azure-devops/boards/board-items-client'
-import { getAzureDevOpsBacklogViewSettings } from '../azure-devops/boards/backlog-view-settings-client'
-import { getAzureDevOpsBacklogConfiguration } from '../azure-devops/boards/board-configuration-client'
 import {
-  listAzureDevOpsIterations,
-  listAzureDevOpsTeams
-} from '../azure-devops/boards/team-resolution'
-import { getAzureDevOpsWorkItemDetail } from '../azure-devops/boards/work-item-client'
-import { getAzureDevOpsWorkItemTypes } from '../azure-devops/boards/work-item-type-metadata'
-import { isAzureDevOpsReviewCreationAuthenticated } from '../azure-devops/pull-request-creation'
-import { getAzureDevOpsRepoRef, type AzureDevOpsRepoRef } from '../azure-devops/repository-ref'
+  createAzureDevOpsBoardsService,
+  type AzureDevOpsBoardsService
+} from '../azure-devops/boards/boards-service'
 import type { Store } from '../persistence/loading-store/store'
 import { getLocalProjectWorktreeGitOptions } from '../workspaces/execution-host/project-runtime-git-options'
 
@@ -56,113 +32,29 @@ function resolveLocalGitOptions(
   return repo ? getLocalProjectWorktreeGitOptions(store, repo) : {}
 }
 
-async function resolveRepo(
-  store: Store,
-  args: AzureDevOpsBoardsRepoArgs
-): Promise<{ repo: AzureDevOpsRepoRef; localGitOptions: { wslDistro?: string } }> {
-  const connectionId = args.connectionId ?? null
-  const localGitOptions = resolveLocalGitOptions(store, args)
-  const repo = await getAzureDevOpsRepoRef(args.repoPath, connectionId, localGitOptions)
-  if (!repo) {
-    // Why: on a remote host a null probe is loss of contact, never a verdict about the remote.
-    throw new Error(
-      connectionId ? AZURE_DEVOPS_REPO_UNVERIFIABLE_ERROR : AZURE_DEVOPS_REMOTE_REQUIRED_ERROR
-    )
-  }
-  return { repo, localGitOptions }
-}
-
 export function registerAzureDevOpsBoardsHandlers(store: Store): void {
-  ipcMain.handle(
-    'azureDevOpsBoards:isAuthenticated',
-    async (_event, args: AzureDevOpsBoardsRepoArgs): Promise<boolean> => {
-      const { localGitOptions } = await resolveRepo(store, args)
-      return isAzureDevOpsReviewCreationAuthenticated(args.repoPath, args.connectionId ?? null, {
-        localGitExecOptions: localGitOptions
-      })
-    }
+  const service = createAzureDevOpsBoardsService((args) => resolveLocalGitOptions(store, args))
+  type Args<K extends keyof AzureDevOpsBoardsService> = Parameters<AzureDevOpsBoardsService[K]>[0]
+  ipcMain.handle('azureDevOpsBoards:isAuthenticated', (_event, args: Args<'isAuthenticated'>) =>
+    service.isAuthenticated(args)
   )
-
-  ipcMain.handle(
-    'azureDevOpsBoards:listTeams',
-    async (_event, args: AzureDevOpsBoardsRepoArgs): Promise<AzureDevOpsTeam[]> => {
-      const { repo } = await resolveRepo(store, args)
-      return listAzureDevOpsTeams(repo)
-    }
+  ipcMain.handle('azureDevOpsBoards:listTeams', (_event, args: Args<'listTeams'>) =>
+    service.listTeams(args)
   )
-
-  ipcMain.handle(
-    'azureDevOpsBoards:getConfiguration',
-    async (
-      _event,
-      args: AzureDevOpsBoardsRepoArgs & AzureDevOpsTeamRoute
-    ): Promise<AzureDevOpsTeamConfiguration> => {
-      const { repo } = await resolveRepo(store, args)
-      const team = azureDevOpsTeamRouteSegment(args)
-      const [backlog, iterations, workItemTypes] = await Promise.all([
-        getAzureDevOpsBacklogConfiguration(repo, team),
-        listAzureDevOpsIterations(repo, team),
-        getAzureDevOpsWorkItemTypes(repo)
-      ])
-      // Why: the settings endpoint is keyed by team id only; a name-routed team has no per-user view.
-      const viewSettings =
-        args.teamId && backlog
-          ? await getAzureDevOpsBacklogViewSettings(repo, args.teamId, backlog.levels)
-          : null
-      return {
-        backlog,
-        iterations,
-        workItemTypes,
-        repo: { organization: repo.organization ?? null, project: repo.project },
-        viewSettings
-      }
-    }
+  ipcMain.handle('azureDevOpsBoards:getConfiguration', (_event, args: Args<'getConfiguration'>) =>
+    service.getConfiguration(args)
   )
-
-  ipcMain.handle(
-    'azureDevOpsBoards:loadBacklog',
-    async (
-      _event,
-      args: AzureDevOpsBoardsRepoArgs &
-        AzureDevOpsTeamRoute & { level: AzureDevOpsBacklogLevel; columnFields?: string[] }
-    ): Promise<AzureDevOpsBacklogPage> => {
-      const { repo } = await resolveRepo(store, args)
-      return loadAzureDevOpsBacklogPage(
-        repo,
-        azureDevOpsTeamRouteSegment(args),
-        args.level,
-        args.columnFields ?? []
-      )
-    }
+  ipcMain.handle('azureDevOpsBoards:loadBacklog', (_event, args: Args<'loadBacklog'>) =>
+    service.loadBacklog(args)
   )
-
-  ipcMain.handle(
-    'azureDevOpsBoards:loadBoard',
-    async (
-      _event,
-      args: AzureDevOpsBoardsRepoArgs & AzureDevOpsTeamRoute & { level: AzureDevOpsBacklogLevel }
-    ): Promise<AzureDevOpsBoardPage | null> => {
-      const { repo } = await resolveRepo(store, args)
-      return loadAzureDevOpsBoardPage(repo, azureDevOpsTeamRouteSegment(args), args.level)
-    }
+  ipcMain.handle('azureDevOpsBoards:loadBoard', (_event, args: Args<'loadBoard'>) =>
+    service.loadBoard(args)
   )
-
   ipcMain.handle(
     'azureDevOpsBoards:loadAssignedWorkItems',
-    async (_event, args: AzureDevOpsBoardsRepoArgs): Promise<AzureDevOpsAssignedWorkItemsPage> => {
-      const { repo } = await resolveRepo(store, args)
-      return loadAzureDevOpsAssignedWorkItems(repo)
-    }
+    (_event, args: Args<'loadAssignedWorkItems'>) => service.loadAssignedWorkItems(args)
   )
-
-  ipcMain.handle(
-    'azureDevOpsBoards:getWorkItem',
-    async (
-      _event,
-      args: AzureDevOpsBoardsRepoArgs & { id: number; cachedIds?: number[] }
-    ): Promise<AzureDevOpsWorkItemDetail | null> => {
-      const { repo } = await resolveRepo(store, args)
-      return getAzureDevOpsWorkItemDetail(repo, args.id, { cachedIds: args.cachedIds ?? [] })
-    }
+  ipcMain.handle('azureDevOpsBoards:getWorkItem', (_event, args: Args<'getWorkItem'>) =>
+    service.getWorkItem(args)
   )
 }
