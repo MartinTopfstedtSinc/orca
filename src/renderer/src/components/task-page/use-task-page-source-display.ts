@@ -59,7 +59,11 @@ export function useTaskPageSourceDisplay<Model extends TaskPageSourceDisplayInpu
         provider: taskSource,
         providerLabel,
         hostAvailability: accountBackedTaskSourceHostAvailability,
-        accountHostId: accountBackedTaskSourceHostId,
+        // Why: Boards reads through the selected project, so it runs on that project's host.
+        accountHostId:
+          taskSource === 'azure-devops'
+            ? (taskSourceRepoContexts[0]?.hostId ?? accountBackedTaskSourceHostId)
+            : accountBackedTaskSourceHostId,
         hostLabelById,
         linearWorkspaceName,
         jiraSiteName,
