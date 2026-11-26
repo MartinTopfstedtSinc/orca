@@ -1,3 +1,4 @@
+import './storage/install-web-storage-namespace'
 import '../assets/main.css'
 
 import { Suspense, useMemo, useState } from 'react'
