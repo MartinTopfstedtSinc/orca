@@ -58,6 +58,8 @@ function getProviderLabel(provider: TaskSourceContext['provider']): string {
       return 'Jira'
     case 'azure-devops':
       return 'Azure DevOps'
+    case 'backlog-md':
+      return 'Backlog.md'
   }
 }
 
@@ -79,6 +81,8 @@ function getSourceIdentityLabel(sourceContext: TaskSourceContext): string | null
         return identity.organization && identity.project
           ? `${identity.organization}/${identity.project}`
           : null
+      case 'backlog-md':
+        return null
     }
   }
   return sourceContext.accountLabel ?? sourceContext.repoId ?? null

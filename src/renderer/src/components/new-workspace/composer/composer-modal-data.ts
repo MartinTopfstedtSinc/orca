@@ -23,6 +23,8 @@ export type ComposerModalData = {
   }
   directSetup?: DirectWorkItemSetupRequest
   prefilledName?: string
+  /** Starting agent note, for task sources that link no work item (Backlog.md). */
+  prefilledNote?: string
   initialRepoId?: string
   initialEphemeralVmRecipeId?: string
   initialProjectGroupId?: string

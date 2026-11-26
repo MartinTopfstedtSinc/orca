@@ -99,6 +99,12 @@ export function useTaskSourceProviderReadiness(
         checking: reviewChecking,
         unavailable: reviewUnavailable,
         visible: visible.has('azure-devops')
+      },
+      // Backlog.md reads repo files, so there is nothing to connect.
+      'backlog-md': {
+        connected: true,
+        checking: false,
+        visible: visible.has('backlog-md')
       }
     }
   }, [

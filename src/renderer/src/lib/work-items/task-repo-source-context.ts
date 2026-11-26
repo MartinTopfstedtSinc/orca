@@ -9,7 +9,7 @@ import { projectHostSetupProjectionFromRepos } from '../../../../shared/project/
 import { getRepoExecutionHostId } from '../../../../shared/execution-host/execution-host'
 export function getTaskPageRepoSourceContext(
   repo: Repo | null | undefined,
-  provider: 'github' | 'gitlab' | 'azure-devops',
+  provider: 'github' | 'gitlab' | 'azure-devops' | 'backlog-md',
   gitlabProjectRef?: GitLabProjectRef | null,
   azureDevOpsIdentity?: AzureDevOpsTaskProviderIdentity | null
 ): TaskSourceContext | null {
@@ -26,7 +26,9 @@ export function getTaskPageRepoSourceContext(
         ? buildGitLabProviderIdentity(gitlabProjectRef)
         : provider === 'azure-devops'
           ? (azureDevOpsIdentity ?? null)
-          : null
+          : provider === 'backlog-md'
+            ? { provider }
+            : null
   return normalizeTaskSourceContext({
     provider,
     projectId: setup?.projectId ?? project?.id ?? repo.id,

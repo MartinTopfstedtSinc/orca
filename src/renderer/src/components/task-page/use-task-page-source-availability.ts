@@ -51,7 +51,7 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageAzureDevOpsS
     [hostRegistryById, taskSource]
   )
   const taskSourceHostAvailability = useMemo<TaskSourceHostAvailability[]>(() => {
-    if (!isRepoBackedTaskProvider(taskSource)) {
+    if (!isRepoBackedTaskProvider(taskSource) && taskSource !== 'backlog-md') {
       return []
     }
     const hostAvailability = taskSourceRepoContexts.flatMap((context) => {
@@ -59,8 +59,8 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageAzureDevOpsS
       const availability = getTaskSourceHostAvailabilityForHost(host, context.hostId)
       return availability ? [availability] : []
     })
-    // Why: Azure DevOps talks HTTP from the main process; there is no CLI tool to preflight.
-    if (taskSource === 'azure-devops') {
+    // Why: Azure DevOps talks HTTP from the main process and Backlog.md reads repo files; neither has a CLI to preflight.
+    if (taskSource === 'azure-devops' || taskSource === 'backlog-md') {
       return hostAvailability
     }
     return [

@@ -52,7 +52,7 @@ export function useTaskPageRuntimeHosts(model: TaskPageRepoSelectionModel) {
   )
   const taskSourceRepoContexts = useMemo(
     () =>
-      isRepoBackedTaskProvider(taskSource)
+      isRepoBackedTaskProvider(taskSource) || taskSource === 'backlog-md'
         ? selectedRepos
             .map((repo) => getTaskPageRepoSourceContext(repo, taskSource))
             .filter((context): context is TaskSourceContext => context !== null)

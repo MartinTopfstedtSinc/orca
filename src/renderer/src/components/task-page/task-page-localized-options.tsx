@@ -3,6 +3,7 @@ import { Github, Gitlab, LayoutGrid, List } from 'lucide-react'
 
 import { AzureDevOpsIcon } from '@/components/icons/AzureDevOpsIcon'
 import { JiraIcon } from '@/components/icons/JiraIcon'
+import { BacklogMdIcon } from '@/components/icons/BacklogMdIcon'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
 import { translate } from '@/i18n/i18n'
 import {
@@ -150,6 +151,11 @@ export const getSourceOptions = createLocalizedCatalog((): SourceOption[] => [
     id: 'azure-devops',
     label: translate('auto.components.TaskPage.azureDevOps.providerLabel', 'Azure DevOps'),
     Icon: ({ className }) => <AzureDevOpsIcon className={className} />
+  },
+  {
+    id: 'backlog-md',
+    label: translate('auto.components.TaskPage.backlogMdSource', 'Backlog.md'),
+    Icon: ({ className }) => <BacklogMdIcon className={className} />
   }
 ])
 

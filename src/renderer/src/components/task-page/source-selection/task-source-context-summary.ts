@@ -199,6 +199,8 @@ function getProviderIdentityLabel(
       return identity.organization && identity.project
         ? `${identity.organization}/${identity.project}`
         : null
+    case 'backlog-md':
+      return null
   }
 }
 

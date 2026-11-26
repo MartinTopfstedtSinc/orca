@@ -9,6 +9,7 @@ import {
   resolveVisibleTaskProvider
 } from '../../../../../shared/work-items/task-providers'
 import { AzureDevOpsIcon } from '@/components/icons/AzureDevOpsIcon'
+import { BacklogMdIcon } from '@/components/icons/BacklogMdIcon'
 import { JiraIcon } from '@/components/icons/JiraIcon'
 import { LinearIcon } from '@/components/icons/LinearIcon'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import { useAppStore } from '@/store/index'
 import { SearchableSetting } from '../section-layout/SearchableSetting'
 import { CodeHostSetupSteps } from './TaskSourceCodeHostSetup'
 import { JiraSetupSteps } from './TaskSourceJiraSetup'
+import { BacklogMdSetupSteps } from './TaskSourceBacklogMdSetup'
 import { TaskSourceLinearSetup } from './TaskSourceLinearSetup'
 import { TaskSourceProviderCard } from './TaskSourceProviderCard'
 import {
@@ -105,6 +107,18 @@ const PROVIDER_META: Record<
       )
     },
     Icon: ({ className }) => <AzureDevOpsIcon className={className} />
+  },
+  'backlog-md': {
+    get label() {
+      return translate('auto.components.settings.TasksPane.backlogMdLabel', 'Backlog.md')
+    },
+    get description() {
+      return translate(
+        'auto.components.settings.TasksPane.backlogMdDescription',
+        'Browse the Markdown tasks in a repository’s backlog folder and start workspaces from them.'
+      )
+    },
+    Icon: ({ className }) => <BacklogMdIcon className={className} />
   }
 }
 
@@ -232,6 +246,13 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
                   onToggleVisible={() => toggleProvider('jira')}
                   onConnected={() => void checkJiraConnection()}
                   onOpenIntegrations={() => openIntegrations(JIRA_INTEGRATION_SECTION_ID)}
+                />
+              ) : provider === 'backlog-md' ? (
+                <BacklogMdSetupSteps
+                  providerLabel={meta.label}
+                  visible={visible}
+                  canHide={canHide}
+                  onToggleVisible={() => toggleProvider('backlog-md')}
                 />
               ) : (
                 <CodeHostSetupSteps
