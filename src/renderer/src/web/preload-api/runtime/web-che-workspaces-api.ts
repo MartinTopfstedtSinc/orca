@@ -1,7 +1,7 @@
 import type { PreloadApi } from '../../../../../preload/api-types'
 import type { KnownRuntimeEnvironment } from '../../../../../shared/remote-runtime/host-catalog/runtime-environments'
 import { callRuntimeResult } from '../../runtime/client/web-runtime-calls'
-import { setCheEnvironments } from '../../runtime/client/web-che-environments'
+import { cheEnvironments, setCheEnvironments } from '../../runtime/client/web-che-environments'
 import {
   assertActiveEnvironment,
   closeCheRuntimeClients,
@@ -15,9 +15,20 @@ type EphemeralVmApi = PreloadApi['ephemeralVm']
 
 export async function refreshCheEnvironments(): Promise<KnownRuntimeEnvironment[]> {
   const controller = requireActiveEnvironment().id
-  const environments = await callRuntimeResult<KnownRuntimeEnvironment[]>('cheWorkspace.environments')
+  const environments = await callRuntimeResult<KnownRuntimeEnvironment[]>(
+    'cheWorkspace.environments'
+  )
   assertActiveEnvironment(controller)
-  if (!Array.isArray(environments)) throw new Error('Invalid Che runtime environment response.')
+  if (!Array.isArray(environments)) {
+    throw new Error('Invalid Che runtime environment response.')
+  }
+  const listed = new Set(environments.map((environment) => environment.id))
+  // Why: a removed environment's client would otherwise keep its socket open and reconnecting.
+  for (const id of cheEnvironments.keys()) {
+    if (!listed.has(id)) {
+      closeCheRuntimeClients(id)
+    }
+  }
   setCheEnvironments(environments)
   return environments
 }
@@ -26,11 +37,18 @@ export async function refreshCheEnvironments(): Promise<KnownRuntimeEnvironment[
 export function createWebCheWorkspacesApi(): EphemeralVmApi {
   const call = <T>(method: string, args?: unknown) =>
     callRuntimeResult<T>(`cheWorkspace.${method}`, args, 360_000)
-  const lifecycle = async (method: 'suspendWorkspace' | 'resumeWorkspace', args: { workspaceId: string }) => {
+  const lifecycle = async (
+    method: 'suspendWorkspace' | 'resumeWorkspace',
+    args: { workspaceId: string }
+  ) => {
     const result = await call<Awaited<ReturnType<EphemeralVmApi[typeof method]>>>(method, args)
     // Suspend stops the pod and resume issues new pairing credentials; reconnect either way.
-    if (result.ok && result.runtime?.runtimeEnvironmentId) closeCheRuntimeClients(result.runtime.runtimeEnvironmentId)
-    if (method === 'resumeWorkspace') await refreshCheEnvironments().catch(() => undefined)
+    if (result.ok && result.runtime?.runtimeEnvironmentId) {
+      closeCheRuntimeClients(result.runtime.runtimeEnvironmentId)
+    }
+    if (method === 'resumeWorkspace') {
+      await refreshCheEnvironments().catch(() => undefined)
+    }
     return result
   }
   return {
@@ -44,16 +62,24 @@ export function createWebCheWorkspacesApi(): EphemeralVmApi {
     provision: async (args) => {
       const result = await call<Awaited<ReturnType<EphemeralVmApi['provision']>>>('provision', args)
       // The workspace exists now; a failed refresh must not hide it from the caller.
-      if (result.ok) await refreshCheEnvironments().catch(() => undefined)
+      if (result.ok) {
+        await refreshCheEnvironments().catch(() => undefined)
+      }
       return result
     },
     // Cancellation must not queue behind a full set of long-running creates.
     cancelProvision: async (args) => {
       const environment = requireActiveEnvironment()
-      const response = await getClientForEnvironment(environment).call('cheWorkspace.cancelProvision', args, {
-        timeoutMs: 15_000
-      })
-      if (!response.ok) throw new Error(response.error.message)
+      const response = await getClientForEnvironment(environment).call(
+        'cheWorkspace.cancelProvision',
+        args,
+        {
+          timeoutMs: 15_000
+        }
+      )
+      if (!response.ok) {
+        throw new Error(response.error.message)
+      }
       return response.result as { cancelled: boolean }
     },
     onProvisionEvent: () => noopUnsubscribe,
@@ -64,7 +90,9 @@ export function createWebCheWorkspacesApi(): EphemeralVmApi {
     onRuntimesChanged: () => noopUnsubscribe,
     cleanup: async (args) => {
       const row = await call<Awaited<ReturnType<EphemeralVmApi['cleanup']>>>('cleanup', args)
-      if (row.runtimeEnvironmentId) closeCheRuntimeClients(row.runtimeEnvironmentId)
+      if (row.runtimeEnvironmentId) {
+        closeCheRuntimeClients(row.runtimeEnvironmentId)
+      }
       await refreshCheEnvironments()
       invalidateRuntimeWorktreeCaches()
       return row

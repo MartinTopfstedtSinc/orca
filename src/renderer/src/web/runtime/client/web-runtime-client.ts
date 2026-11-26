@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Why: upstream keeps this client at the limit; the fork routes subscriptions onto the shared socket here, with the logic in web-runtime-shared-subscription.ts. */
 import {
   subscribeDedicatedWebRuntime,
   observeCrewSubscriptionSetup,
@@ -18,6 +19,11 @@ import type { RuntimeRpcResponse } from '../../../../../shared/remote-runtime/rp
 import { WebRuntimeConnectionTransport } from './web-runtime-connection-transport'
 import type { WebRuntimeCredentialSource } from '../security/web-runtime-credential-source'
 import { subscribeWebRuntimeFileWatch } from './web-runtime-file-watch-subscription'
+import {
+  createRequestCancelProbe,
+  needsOwnSocket,
+  unsubscribeOnAbort
+} from './web-runtime-shared-subscription'
 import type { WebRuntimeConnectionState } from './web-runtime-connection-frame-router'
 import {
   pinWebRuntimeSubscription,
@@ -33,6 +39,11 @@ export class WebRuntimeClient {
   private readonly transport: WebRuntimeConnectionTransport
   private readonly fileWatchTeardownRetries = new Map<string, Set<() => Promise<void>>>()
   private readonly childClients = new Set<WebRuntimeClient>()
+  private readonly hostCancelsRequests = createRequestCancelProbe({
+    waitForConnected: (timeoutMs, signal) => this.waitForConnected(timeoutMs, signal),
+    connectionEpoch: () => this.connectionEpoch,
+    status: () => this.transport.call('status.get', undefined, { timeoutMs: 15_000 })
+  })
 
   readonly statusOwner?: RuntimeHostStatusOwner
 
@@ -128,10 +139,23 @@ export class WebRuntimeClient {
       throwIfSignalAborted(options?.signal)
       return SHARED_CONNECTION_SUBSCRIPTION_METHODS.has(method)
         ? this.subscribeFileWatch(params, callbacks, options)
-        : this.subscribeDedicated(method, params, callbacks, options)
+        : this.subscribeSharedWhenPossible(method, params, callbacks, options)
     } catch (error) {
       return Promise.reject(error)
     }
+  }
+
+  private async subscribeSharedWhenPossible(
+    method: string,
+    params: unknown,
+    callbacks: WebRuntimeSubscriptionCallbacks,
+    options?: WebRuntimeSubscribeOptions
+  ): Promise<WebRuntimeTransportSubscriptionHandle> {
+    if (needsOwnSocket(method, callbacks) || !(await this.hostCancelsRequests(options))) {
+      return this.subscribeDedicated(method, params, callbacks, options)
+    }
+    const handle = await this.subscribeOnCurrentConnection(method, params, callbacks, options, true)
+    return unsubscribeOnAbort(handle, options)
   }
 
   private async subscribeFileWatch(
@@ -206,7 +230,8 @@ export class WebRuntimeClient {
     method: string,
     params: unknown,
     callbacks: WebRuntimeSubscriptionCallbacks,
-    options?: WebRuntimeSubscribeOptions
+    options?: WebRuntimeSubscribeOptions,
+    cancelOnUnsubscribe = false
   ): Promise<WebRuntimeTransportSubscriptionHandle> {
     const expectedConnectionEpoch =
       options?.expectedEnvironmentRuntimeId === undefined
@@ -234,7 +259,8 @@ export class WebRuntimeClient {
       subscriptions: this.subscriptions,
       sendEncrypted: (message) => this.sendEncrypted(message),
       sendBinary: (bytes) => this.sendEncryptedBinary(bytes),
-      deviceToken: this.connection.credential.deviceToken
+      deviceToken: this.connection.credential.deviceToken,
+      cancelOnUnsubscribe
     })
   }
 

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Why: upstream keeps this dispatcher at the limit; the fork adds one rpc.cancel check, handled in runtime-rpc-binary-routing.ts. */
 import type { WebSocket } from 'ws'
 import type {
   PairingGetEndpointsParams,
@@ -172,6 +173,9 @@ export class RuntimeRpcWebSocketDispatch extends RuntimeRpcMobileDevices {
     if (this.stagedReplies.answerRead(request, device.deviceId, reply)) {
       return
     }
+    if (this.answerRpcCancel(request, reply, ws)) {
+      return
+    }
     // Use authenticated scope for dispatcher permissions, never request scope.
     const callerScope = callerScopeOf(device)
 
@@ -213,7 +217,7 @@ export class RuntimeRpcWebSocketDispatch extends RuntimeRpcMobileDevices {
       return
     }
 
-    const abortRegistration = ws ? this.registerWebSocketDispatchAbort(ws) : null
+    const abortRegistration = ws ? this.registerWebSocketDispatchAbort(ws, request.id) : null
 
     // Older pairings lack scope metadata; stamp authenticated scope on status.get.
     const boundedReply = limitRuntimeRpcReplySize(

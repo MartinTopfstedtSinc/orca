@@ -4,6 +4,7 @@ import type {
 } from '../../../../shared/rpc-contract/rpc-params-catalog.generated'
 import type { RpcAnyMethodDeclaration } from '../core'
 import type { ALL_RPC_METHODS } from '../methods/rpc-method-registry'
+import type { CHE_WORKSPACE_METHODS } from '../../../che/che-workspaces'
 
 type RegisteredMethod = (typeof ALL_RPC_METHODS)[number]
 
@@ -12,7 +13,7 @@ type UncataloguedMethod =
   | 'emulator.install'
   | 'orchestration.send'
   | 'orchestration.taskUpdate'
-  | (typeof import('../../../che/che-workspaces').CHE_WORKSPACE_METHODS)[number]['name']
+  | (typeof CHE_WORKSPACE_METHODS)[number]['name']
 
 type IsAny<T> = 0 extends 1 & T ? true : false
 
