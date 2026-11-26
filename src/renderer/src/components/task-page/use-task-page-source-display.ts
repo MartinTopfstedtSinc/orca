@@ -2,7 +2,7 @@ import type { TaskPageLinearCreationStateModel } from './linear/creation/use-tas
 import { useMemo } from 'react'
 import type { GitHubTaskKind } from '../../../../shared/work-items/task-github-search'
 import { buildGitHubRepoUrl } from '../../../../shared/github/repositories/links'
-import { getTaskSourceContextSummary } from './source-selection/task-source-context-summary'
+import { getTaskSourceContextSummary } from './source-selection/task-source-context-summary-by-provider'
 import { getGitHubProjectSourceSummary } from './task-page-source-context'
 
 type TaskPageSourceDisplayInput = TaskPageLinearCreationStateModel & {
@@ -26,7 +26,8 @@ export function useTaskPageSourceDisplay<Model extends TaskPageSourceDisplayInpu
     hostLabelById,
     selectedLinearWorkspace,
     selectedJiraSite,
-    activeGithubTaskKind
+    activeGithubTaskKind,
+    azureDevOpsViews
   } = model
   // Why strict kind: Issues and PRs resolve independently; the other kind's repo is not this list's source.
   const githubActiveSources = useMemo(
@@ -39,6 +40,7 @@ export function useTaskPageSourceDisplay<Model extends TaskPageSourceDisplayInpu
   const linearWorkspaceName =
     selectedLinearWorkspace?.organizationName ?? selectedLinearWorkspace?.id ?? null
   const jiraSiteName = selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null
+  const azureDevOpsProjectName = azureDevOpsViews.projectLabel
   // Why the catalog dep: it changes with the language, and the summary's own copy is translated too.
   const taskSourceContextSummary = useMemo(() => {
     const providerLabel =
@@ -51,15 +53,21 @@ export function useTaskPageSourceDisplay<Model extends TaskPageSourceDisplayInpu
         hostLabelById
       })
     }
-    if (taskSource === 'linear' || taskSource === 'jira') {
+    // Azure DevOps names a project, not a repository, so it reads as account-backed here.
+    if (taskSource === 'linear' || taskSource === 'jira' || taskSource === 'azure-devops') {
       return getTaskSourceContextSummary({
         provider: taskSource,
         providerLabel,
         hostAvailability: accountBackedTaskSourceHostAvailability,
-        accountHostId: accountBackedTaskSourceHostId,
+        // Why: Boards reads through the selected project, so it runs on that project's host.
+        accountHostId:
+          taskSource === 'azure-devops'
+            ? (taskSourceRepoContexts[0]?.hostId ?? accountBackedTaskSourceHostId)
+            : accountBackedTaskSourceHostId,
         hostLabelById,
         linearWorkspaceName,
-        jiraSiteName
+        jiraSiteName,
+        azureDevOpsProjectName
       })
     }
     return getTaskSourceContextSummary({
@@ -80,6 +88,7 @@ export function useTaskPageSourceDisplay<Model extends TaskPageSourceDisplayInpu
   }, [
     accountBackedTaskSourceHostAvailability,
     accountBackedTaskSourceHostId,
+    azureDevOpsProjectName,
     githubActiveSources,
     githubMode,
     hostLabelById,

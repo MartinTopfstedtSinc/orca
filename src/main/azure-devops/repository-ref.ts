@@ -177,7 +177,25 @@ function parseScpLike(remoteUrl: string): AzureDevOpsRepoRef | null {
   if (!match) {
     return null
   }
-  return parseCloudSshPath(match[1], match[2])
+  return parseCloudSshPath(match[1], match[2]) ?? parseServerSshPath(match[1], match[2])
+}
+
+// Why: Azure DevOps Server serves SSH clones from its own host, under the same
+// collection/project/_git/repo path as HTTPS. The API is on that host over HTTPS;
+// a server on another URL is set with ORCA_AZURE_DEVOPS_API_BASE_URL.
+function parseServerSshPath(host: string, rawPath: string): AzureDevOpsRepoRef | null {
+  const parsed = parseGitHttpPath(rawPath.startsWith('/') ? rawPath : `/${rawPath}`)
+  if (!parsed || parsed.prefix.length === 0) {
+    return null
+  }
+  const hostname = host.toLowerCase()
+  return makeServerRef(
+    hostname,
+    `https://${hostname}`,
+    parsed.prefix,
+    parsed.project,
+    parsed.repository
+  )
 }
 
 export function parseAzureDevOpsRepoRef(remoteUrl: string): AzureDevOpsRepoRef | null {
@@ -202,8 +220,11 @@ export function parseAzureDevOpsRepoRef(remoteUrl: string): AzureDevOpsRepoRef |
       return parseVisualStudioUrl(url)
     }
 
+    if (!['http:', 'https:'].includes(url.protocol.toLowerCase())) {
+      return parseServerSshPath(host, url.pathname)
+    }
     const parsed = parseGitHttpPath(url.pathname)
-    if (!parsed || !['http:', 'https:'].includes(url.protocol.toLowerCase())) {
+    if (!parsed) {
       return null
     }
     // Self-hosted Azure remotes are identified by the _git path, not the hostname.

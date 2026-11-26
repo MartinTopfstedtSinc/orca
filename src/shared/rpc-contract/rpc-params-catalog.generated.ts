@@ -851,6 +851,13 @@ import {
   SkillsGetInstallProgressParams
 } from './skills/skills-params'
 import {
+  AzureDevOpsBoardsBacklog,
+  AzureDevOpsBoardsBoard,
+  AzureDevOpsBoardsRepo,
+  AzureDevOpsBoardsTeam,
+  AzureDevOpsBoardsWorkItem
+} from './source-control/azure-devops-boards-params'
+import {
   GitBlame,
   GitBranchCompare,
   GitBranchDiff,
@@ -1264,6 +1271,13 @@ export const RPC_PARAMS_BY_METHOD = {
   'automation.runs': AutomationRuns,
   'automation.show': AutomationId,
   'automation.update': AutomationUpdate,
+  'azureDevOpsBoards.getConfiguration': AzureDevOpsBoardsTeam,
+  'azureDevOpsBoards.getWorkItem': AzureDevOpsBoardsWorkItem,
+  'azureDevOpsBoards.isAuthenticated': AzureDevOpsBoardsRepo,
+  'azureDevOpsBoards.listTeams': AzureDevOpsBoardsRepo,
+  'azureDevOpsBoards.loadAssignedWorkItems': AzureDevOpsBoardsRepo,
+  'azureDevOpsBoards.loadBacklog': AzureDevOpsBoardsBacklog,
+  'azureDevOpsBoards.loadBoard': AzureDevOpsBoardsBoard,
   'bots.access.decide': BotAccessDecide,
   'bots.access.list': null,
   'bots.access.redeem': BotAccessRedeem,
