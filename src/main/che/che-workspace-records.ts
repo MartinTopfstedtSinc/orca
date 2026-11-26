@@ -19,7 +19,7 @@ export const recipe = {
   resume: 'che:managed',
   destroy: 'che:managed'
 }
-const operations = new Set<string>()
+export const operations = new Set<string>()
 export const dataPath = () => getAppEnvironment().getPath('userData')
 export const records = () =>
   listEphemeralVmRuntimes(dataPath()).filter((row) => row.recipeId === recipe.id)
