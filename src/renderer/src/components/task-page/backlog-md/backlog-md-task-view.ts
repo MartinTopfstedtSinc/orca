@@ -79,11 +79,15 @@ export function backlogMdWorkspaceSeed(task: BacklogMdTask): string {
   return slugifyForWorkspaceName(`${task.id} ${task.title}`)
 }
 
+export function backlogMdTaskFilePath(row: BacklogMdTaskRow): string {
+  return `${row.folder}/tasks/${row.task.fileName}`
+}
+
 /** The agent reads the task from the repo, so the note points at it instead of copying it. */
 export function backlogMdWorkspaceNote(row: BacklogMdTaskRow): string {
   return [
     `Work on Backlog.md task ${row.task.id}: ${row.task.title}`,
-    `The task file is ${row.folder}/tasks/${row.task.fileName}. Read it, including its acceptance criteria, before you start.`
+    `The task file is ${backlogMdTaskFilePath(row)}. Read it, including its acceptance criteria, before you start.`
   ].join('\n\n')
 }
 

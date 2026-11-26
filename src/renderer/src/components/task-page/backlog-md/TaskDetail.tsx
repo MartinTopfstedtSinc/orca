@@ -2,7 +2,7 @@ import { ArrowLeft, Play } from 'lucide-react'
 import { useTranslate } from '@/i18n/use-translate'
 import { Button } from '@/components/ui/button'
 import CommentMarkdown from '@/components/comment-markdown/CommentMarkdown'
-import type { BacklogMdTaskRow } from './backlog-md-task-view'
+import { backlogMdTaskFilePath, type BacklogMdTaskRow } from './backlog-md-task-view'
 
 export function TaskPageBacklogMdTaskDetail({
   row,
@@ -40,7 +40,7 @@ export function TaskPageBacklogMdTaskDetail({
         </Button>
         <span className="font-mono text-xs text-muted-foreground">{task.id}</span>
         <span className="text-xs text-muted-foreground">
-          {`${row.repo.displayName} · ${row.folder}/tasks/${task.fileName}`}
+          {row.repo.displayName} · {backlogMdTaskFilePath(row)}
         </span>
         <Button size="sm" onClick={onStart} className="ml-auto">
           <Play className="size-3.5" />
