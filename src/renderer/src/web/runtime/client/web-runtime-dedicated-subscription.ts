@@ -8,6 +8,7 @@ import {
   runtimeEnvironmentSetupFailure
 } from '../../../../../shared/remote-runtime/host-catalog/runtime-environment-subscription-setup'
 import type { WebRuntimeClient } from './web-runtime-client'
+import { RUNTIME_RPC_CANCEL_METHOD } from '../../../../../shared/remote-runtime/rpc/runtime-rpc-cancel'
 import type {
   WebRuntimeTransportSubscription,
   WebRuntimeSubscriptionCallbacks,
@@ -115,7 +116,8 @@ export async function enrollWebRuntimeSubscription({
   subscriptions,
   sendEncrypted,
   sendBinary,
-  deviceToken
+  deviceToken,
+  cancelOnUnsubscribe = false
 }: {
   method: string
   params: unknown
@@ -127,6 +129,8 @@ export async function enrollWebRuntimeSubscription({
   sendEncrypted: (message: unknown) => boolean
   sendBinary: (bytes: Uint8Array<ArrayBufferLike>) => boolean
   deviceToken: string
+  // A shared socket stays open, so the host must be told to end the stream.
+  cancelOnUnsubscribe?: boolean
 }): Promise<WebRuntimeTransportSubscriptionHandle> {
   // The outer wait keeps main's normalized abort reason; the inner signal frees the waiter early.
   await waitForPromiseWithSignal(
@@ -152,6 +156,14 @@ export async function enrollWebRuntimeSubscription({
   return {
     unsubscribe: () => {
       subscriptions.delete(subscription.id)
+      if (cancelOnUnsubscribe) {
+        sendEncrypted({
+          id: nextId(),
+          deviceToken: deviceToken,
+          method: RUNTIME_RPC_CANCEL_METHOD,
+          params: { id: subscription.id }
+        })
+      }
       const teardown = options?.buildUnsubscribe?.(params)
       if (teardown) {
         sendEncrypted({

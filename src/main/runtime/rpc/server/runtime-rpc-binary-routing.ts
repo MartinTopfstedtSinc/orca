@@ -4,6 +4,9 @@ import { DeviceRegistry } from './pairing/device-registry'
 import { loadOrCreateE2EEKeypair, type E2EEKeypair } from './pairing/e2ee-keypair'
 import { ensureHostInstanceIdentity, type HostIdentityOutcome } from '../../host-instance-identity'
 import { RuntimeRpcState } from './runtime-rpc-state'
+import type { RpcRequest } from '../core'
+import { successResponse } from '../responses/rpc-response'
+import { RUNTIME_RPC_CANCEL_METHOD } from '../../../../shared/remote-runtime/rpc/runtime-rpc-cancel'
 import {
   DEVICE_REGISTRY_UNAVAILABLE_GUIDANCE,
   E2EE_KEY_UNAVAILABLE_GUIDANCE,
@@ -36,7 +39,10 @@ export class RuntimeRpcBinaryRouting extends RuntimeRpcState {
     this.binaryMessageRouter.dispatch(this.mobileSocketWiring?.getConnectionId(ws), bytes)
   }
 
-  protected registerWebSocketDispatchAbort(ws: WebSocket): {
+  protected registerWebSocketDispatchAbort(
+    ws: WebSocket,
+    requestId?: string
+  ): {
     signal: AbortSignal
     dispose: () => void
   } {
@@ -50,6 +56,7 @@ export class RuntimeRpcBinaryRouting extends RuntimeRpcState {
     if (!state) {
       state = {
         controllers: new Set(),
+        byRequestId: new Map(),
         abortOnClose: () => this.abortWebSocketDispatches(ws)
       }
       this.wsDispatchAbortStates.set(ws, state)
@@ -58,6 +65,9 @@ export class RuntimeRpcBinaryRouting extends RuntimeRpcState {
       ws.on('error', state.abortOnClose)
     }
     state.controllers.add(abortController)
+    if (requestId !== undefined) {
+      state.byRequestId.set(requestId, abortController)
+    }
 
     return {
       signal: abortController.signal,
@@ -67,6 +77,9 @@ export class RuntimeRpcBinaryRouting extends RuntimeRpcState {
           return
         }
         current.controllers.delete(abortController)
+        if (requestId !== undefined && current.byRequestId.get(requestId) === abortController) {
+          current.byRequestId.delete(requestId)
+        }
         if (current.controllers.size > 0) {
           return
         }
@@ -75,6 +88,31 @@ export class RuntimeRpcBinaryRouting extends RuntimeRpcState {
         ws.off('error', current.abortOnClose)
       }
     }
+  }
+
+  /**
+   * Answers rpc.cancel, which ends one streaming request on the socket that sent it. A socket
+   * can only name its own requests, so this needs no permission beyond the device check.
+   */
+  protected answerRpcCancel(
+    request: RpcRequest,
+    reply: (response: string) => void,
+    ws: WebSocket | undefined
+  ): boolean {
+    if (request.method !== RUNTIME_RPC_CANCEL_METHOD) {
+      return false
+    }
+    const target = (request.params as { id?: unknown } | null | undefined)?.id
+    const controller =
+      ws && typeof target === 'string'
+        ? this.wsDispatchAbortStates.get(ws)?.byRequestId.get(target)
+        : undefined
+    controller?.abort()
+    const meta = { runtimeId: this.runtime.getRuntimeId() }
+    reply(
+      JSON.stringify(successResponse(request.id, meta, { cancelled: controller !== undefined }))
+    )
+    return true
   }
 
   protected abortWebSocketDispatches(ws: WebSocket): void {
@@ -89,6 +127,7 @@ export class RuntimeRpcBinaryRouting extends RuntimeRpcState {
       controller.abort()
     }
     state.controllers.clear()
+    state.byRequestId.clear()
   }
 
   protected initializePairingIdentity(): PairingIdentityInitialization {

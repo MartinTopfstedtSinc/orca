@@ -120,7 +120,12 @@ export class RuntimeRpcState {
   protected readonly binaryMessageRouter = new RuntimeBinaryMessageRouter()
   protected readonly wsDispatchAbortStates = new Map<
     WebSocket,
-    { controllers: Set<AbortController>; abortOnClose: () => void }
+    {
+      controllers: Set<AbortController>
+      // Streaming requests by id, so rpc.cancel can end one without closing the socket.
+      byRequestId: Map<string, AbortController>
+      abortOnClose: () => void
+    }
   >()
   // Count long-running dispatches separately from socket maxConnections (design §§3.1, 7).
   protected activeLongPolls = 0
