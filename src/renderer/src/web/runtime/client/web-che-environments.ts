@@ -6,5 +6,7 @@ export const cheEnvironments = new Map<string, KnownRuntimeEnvironment>()
 
 export function setCheEnvironments(environments: KnownRuntimeEnvironment[]): void {
   cheEnvironments.clear()
-  for (const environment of environments) cheEnvironments.set(environment.id, environment)
+  for (const environment of environments) {
+    cheEnvironments.set(environment.id, environment)
+  }
 }
