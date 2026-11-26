@@ -1,7 +1,7 @@
 import type { PreloadApi } from '../../../../../preload/api-types'
 import type { KnownRuntimeEnvironment } from '../../../../../shared/remote-runtime/host-catalog/runtime-environments'
 import { callRuntimeResult } from '../../runtime/client/web-runtime-calls'
-import { setCheEnvironments } from '../../runtime/client/web-che-environments'
+import { cheEnvironments, setCheEnvironments } from '../../runtime/client/web-che-environments'
 import {
   assertActiveEnvironment,
   closeCheRuntimeClients,
@@ -18,6 +18,9 @@ export async function refreshCheEnvironments(): Promise<KnownRuntimeEnvironment[
   const environments = await callRuntimeResult<KnownRuntimeEnvironment[]>('cheWorkspace.environments')
   assertActiveEnvironment(controller)
   if (!Array.isArray(environments)) throw new Error('Invalid Che runtime environment response.')
+  const listed = new Set(environments.map((environment) => environment.id))
+  // Why: a removed environment's client would otherwise keep its socket open and reconnecting.
+  for (const id of cheEnvironments.keys()) if (!listed.has(id)) closeCheRuntimeClients(id)
   setCheEnvironments(environments)
   return environments
 }
