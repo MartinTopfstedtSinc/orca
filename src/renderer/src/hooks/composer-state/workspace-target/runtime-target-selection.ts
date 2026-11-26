@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Why: upstream keeps this hook at the limit; the fork adds one import for agent workspaces. */
 import { ipcOrRuntimeTargetForHostId } from '@/runtime/rpc/targets/runtime-client-target'
 import { useEffect, useMemo, useRef } from 'react'
 import '@/components/sidebar/workspace-creation/folder/folder-workspace-source-repos'
@@ -25,6 +26,7 @@ import { selectProjectFirstReason } from './runtime-target-selection-copy'
 import type { ComposerRuntimeTargetSelectionInput } from '../composer-target-input-contracts'
 import type { TuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent'
 import type { ExecutionHostPlatformFact } from '@/runtime/hosts/platform/execution-host-platform-fact'
+import { ephemeralVmsEnabledFor } from './ephemeral-vms-enabled'
 import { pickerRepos } from '../../../../../shared/project/catalog/hidden-projects'
 
 export function useComposerRuntimeTargetSelection(input: ComposerRuntimeTargetSelectionInput) {
@@ -255,10 +257,7 @@ export function useComposerRuntimeTargetSelection(input: ComposerRuntimeTargetSe
   const selectedRecipeRepoConnectionId = selectedRepo?.connectionId ?? null
 
   // Only probe enabled experiments or hidden features can raise setup errors.
-  // The web client's only recipe is the server-managed Che DevWorkspace, which needs no toggle.
-  const ephemeralVmsEnabled =
-    settings?.experimentalEphemeralVms === true ||
-    (window as Window & { __ORCA_WEB_CLIENT__?: boolean }).__ORCA_WEB_CLIENT__ === true
+  const ephemeralVmsEnabled = ephemeralVmsEnabledFor(settings)
 
   const {
     recipes: ephemeralVmRecipes,

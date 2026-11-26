@@ -53,11 +53,13 @@ export function subscribeWebRuntimeStatus(
   }
 }
 export function readWebRuntimeStatusSnapshots(): RuntimeHostStatusSnapshot[] {
-  return [webRuntimeState.activeClient, ...[...cheClients.values()].map((entry) => entry.client)]
-    .flatMap((client) => {
-      const snapshot = client?.statusOwner?.read()
-      return snapshot ? [snapshot] : []
-    })
+  return [
+    webRuntimeState.activeClient,
+    ...[...cheClients.values()].map((entry) => entry.client)
+  ].flatMap((client) => {
+    const snapshot = client?.statusOwner?.read()
+    return snapshot ? [snapshot] : []
+  })
 }
 export async function observeWebRuntimeStatus(
   selector: string,
