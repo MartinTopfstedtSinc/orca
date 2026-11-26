@@ -55,6 +55,9 @@ export function getRecipeDestroyLabel(
 }
 
 export function getRecipeDetail(recipe: EphemeralVmRecipeOption, t?: Translate): string {
+  if (recipe.id === 'che-devworkspace') {
+    return 'Isolated workspace with persistent storage'
+  }
   return `${getRecipeCommandDisplay(recipe.create)} · ${getRecipeDestroyLabel(recipe, t)}`
 }
 

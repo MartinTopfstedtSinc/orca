@@ -105,12 +105,20 @@ export function RuntimeServerList({
   }
 
   const firstManagedId = environments.find((environment) => getOrcadSshDeployment(environment))?.id
+  // Agent environments come last, under their own heading.
+  const isAgentEnvironment = (environment: PublicKnownRuntimeEnvironment) =>
+    environment.source === 'ephemeral-vm'
+  const orderedEnvironments = [
+    ...environments.filter((environment) => !isAgentEnvironment(environment)),
+    ...environments.filter(isAgentEnvironment)
+  ]
+  const firstAgentId = orderedEnvironments.find(isAgentEnvironment)?.id
   return (
     <div
       data-settings-section={firstManagedId ? undefined : 'managed-servers'}
       className="divide-y divide-border rounded-lg border border-border bg-card"
     >
-      {environments.map((environment) => {
+      {orderedEnvironments.map((environment) => {
         const rowProps = {
           environment,
           duplicateOfNames: duplicatePairedServerNames(environments, environment.id),
@@ -141,13 +149,23 @@ export function RuntimeServerList({
           ) : (
             <RuntimeServerRow {...rowProps} onChanged={onChanged} />
           )
+        const agentHeading =
+          environment.id === firstAgentId ? (
+            <h3 className="px-3 py-2 text-xs font-medium text-muted-foreground">
+              Agent environments
+            </h3>
+          ) : null
         // Preserve the managed-servers deep link on the first managed row.
         return environment.id === firstManagedId ? (
           <div key={environment.id} data-settings-section="managed-servers" className="scroll-mt-8">
+            {agentHeading}
             {row}
           </div>
         ) : (
-          <div key={environment.id}>{row}</div>
+          <div key={environment.id}>
+            {agentHeading}
+            {row}
+          </div>
         )
       })}
       {pending.map((row) => (

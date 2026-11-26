@@ -1,4 +1,6 @@
 import { createWebRuntimeEnvironmentSubscriber } from './web-runtime-subscription'
+import { refreshCheEnvironments } from './web-che-workspaces-api'
+import { cheEnvironments } from '../../runtime/client/web-che-environments'
 import { pairedRuntimeConnectionFromOffer } from '../../../../../shared/remote-runtime/pairing/paired-runtime-connection'
 import {
   createWebRuntimeSubscriptionApiControl,
@@ -27,6 +29,7 @@ import {
 } from '../../runtime/client/web-runtime-calls'
 import {
   closeActiveRuntimeClients,
+  closeCheRuntimeClients,
   subscribeWebRuntimeStatus,
   readWebRuntimeStatusSnapshots,
   disconnectActiveRuntimeEnvironment,
@@ -43,7 +46,15 @@ export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'
     getStatusSnapshots: async () => readWebRuntimeStatusSnapshots(),
     list: async () => {
       const environment = requireActiveEnvironmentOrNull()
-      return environment ? [redactStoredWebRuntimeEnvironment(environment)] : []
+      if (!environment) {
+        return []
+      }
+      try {
+        await refreshCheEnvironments()
+      } catch {
+        // Keep the known agent environments while the controller is unreachable.
+      }
+      return [environment, ...cheEnvironments.values()].map(redactStoredWebRuntimeEnvironment)
     },
     addFromPairingCode: async ({ name, pairingCode }) => {
       const offer = parseWebPairingInput(pairingCode)
@@ -51,6 +62,7 @@ export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'
         throw new Error('Invalid Orca pairing code.')
       }
       const previousEnvironment = webRuntimeState.activeEnvironment
+      cheEnvironments.clear()
       closeActiveRuntimeClients()
       webRuntimeState.activeEnvironment = createStoredWebRuntimeEnvironment({
         name,
@@ -155,6 +167,7 @@ export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'
           )
         }
       }
+      cheEnvironments.clear()
       manuallyDisconnectedEnvironmentIds.clear()
       closeActiveRuntimeClients()
       webRuntimeState.activeEnvironment = nextEnvironment
@@ -183,6 +196,10 @@ export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'
       redactStoredWebRuntimeEnvironment(resolveEnvironment(selector)),
     remove: async ({ selector }) => {
       const environment = resolveEnvironment(selector)
+      if (cheEnvironments.has(environment.id)) {
+        // The controlling server owns this record; deleting it here would not stick.
+        throw new Error('Use environment cleanup to delete a Che DevWorkspace.')
+      }
       if (webRuntimeState.activeEnvironment?.id === environment.id) {
         removeActiveRuntimeEnvironment()
       }
@@ -191,6 +208,10 @@ export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'
     },
     disconnect: async ({ selector }) => {
       const environment = resolveEnvironment(selector)
+      if (cheEnvironments.has(environment.id)) {
+        manuallyDisconnectedEnvironmentIds.add(environment.id)
+        closeCheRuntimeClients(environment.id)
+      }
       if (webRuntimeState.activeEnvironment?.id === environment.id) {
         manuallyDisconnectedEnvironmentIds.add(environment.id)
         disconnectActiveRuntimeEnvironment()
@@ -200,7 +221,11 @@ export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'
     connect: ({ selector, timeoutMs }) => {
       const environment = resolveEnvironment(selector)
       manuallyDisconnectedEnvironmentIds.delete(environment.id)
-      closeActiveRuntimeClients()
+      if (cheEnvironments.has(environment.id)) {
+        closeCheRuntimeClients(environment.id)
+      } else {
+        closeActiveRuntimeClients()
+      }
       return callEnvironmentEnvelope<RuntimeStatus>(
         environment.id,
         'status.get',

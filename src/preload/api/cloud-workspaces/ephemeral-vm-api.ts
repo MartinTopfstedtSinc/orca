@@ -61,7 +61,8 @@ export type EphemeralVmApi = {
         stderr: string
         warnings: EphemeralVmRecipeResultWarning[]
       }
-    | ({ ok: false; stderr: string; stdout: string } & EphemeralVmFailure)
+    // fallback: nothing was created, so the workspace can be created on the source host.
+    | ({ ok: false; stderr: string; stdout: string; fallback?: boolean } & EphemeralVmFailure)
   >
   cancelProvision: (args: { provisionId: string }) => Promise<{ cancelled: boolean }>
   onProvisionEvent: (

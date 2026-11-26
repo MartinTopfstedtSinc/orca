@@ -34,7 +34,9 @@ export function useEphemeralVmRecipeOptions(args: EphemeralVmRecipeOptionsArgs):
     Boolean(args.repoId) &&
     args.repoIsGit &&
     !args.repoConnectionId &&
-    args.repoExecutionHostId === LOCAL_EXECUTION_HOST_ID &&
+    (args.repoExecutionHostId === LOCAL_EXECUTION_HOST_ID ||
+      (typeof window !== 'undefined' &&
+        (window as Window & { __ORCA_WEB_CLIENT__?: boolean }).__ORCA_WEB_CLIENT__ === true)) &&
     !args.projectGroupTarget
 
   const load = useCallback(
@@ -61,7 +63,7 @@ export function useEphemeralVmRecipeOptions(args: EphemeralVmRecipeOptionsArgs):
               return args.initialRecipeId &&
                 nextRecipes.some((recipe) => recipe.id === args.initialRecipeId)
                 ? args.initialRecipeId
-                : null
+                : (nextRecipes.find((recipe) => recipe.id === 'che-devworkspace')?.id ?? null)
             }
             return current && nextRecipes.some((recipe) => recipe.id === current) ? current : null
           })
