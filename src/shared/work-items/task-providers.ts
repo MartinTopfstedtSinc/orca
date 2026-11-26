@@ -1,6 +1,12 @@
-export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira'
+export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira' | 'backlog-md'
 
-export const TASK_PROVIDERS: readonly TaskProvider[] = ['github', 'gitlab', 'linear', 'jira']
+export const TASK_PROVIDERS: readonly TaskProvider[] = [
+  'github',
+  'gitlab',
+  'linear',
+  'jira',
+  'backlog-md'
+]
 
 const TASK_PROVIDER_SET = new Set<TaskProvider>(TASK_PROVIDERS)
 
@@ -97,7 +103,8 @@ function isTaskProviderAvailable(
     return availability.gitlabInstalled
   }
   // Disconnected Jira must remain visible as its own first-time setup entry point.
-  if (provider === 'jira') {
+  // Backlog.md reads repo files and shows its own empty state when a project has none.
+  if (provider === 'jira' || provider === 'backlog-md') {
     return true
   }
   return availability.linearConnected

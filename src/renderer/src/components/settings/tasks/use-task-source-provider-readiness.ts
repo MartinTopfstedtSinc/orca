@@ -91,6 +91,12 @@ export function useTaskSourceProviderReadiness(
         connected: jiraConnected,
         checking: jiraChecking,
         visible: visible.has('jira')
+      },
+      // Backlog.md reads repo files, so there is nothing to connect.
+      'backlog-md': {
+        connected: true,
+        checking: false,
+        visible: visible.has('backlog-md')
       }
     }
   }, [

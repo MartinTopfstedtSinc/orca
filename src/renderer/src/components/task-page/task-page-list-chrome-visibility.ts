@@ -29,5 +29,8 @@ export function shouldHideTaskPageListChrome({
       return hasJiraDetail
     case 'linear':
       return hasLinearIssueDetail || hasLinearProjectContext || hasLinearViewContext
+    // Backlog.md opens task details beside its list, so the list chrome stays.
+    case 'backlog-md':
+      return false
   }
 }
