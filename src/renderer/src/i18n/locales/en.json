@@ -4603,7 +4603,28 @@
           "linearViewNotFound": "Saved Linear view was not found.",
           "linearViewRestoreFailed": "Failed to restore saved Linear view."
         },
-        "shownCount_one": "{{count}} shown"
+        "shownCount_one": "{{count}} shown",
+        "backlogMdReadFailed": "Couldn’t read tasks in {{project}}: {{reason}}",
+        "backlogMdEmptyTitle": "No Backlog.md tasks here",
+        "backlogMdEmptyBody": "None of the selected projects has a backlog/tasks folder. Run backlog init in a repository to start one.",
+        "backlogMdNoMatches": "No tasks match these filters.",
+        "backlogMdRefresh": "Reload Backlog.md tasks",
+        "backlogMdSearch": "Search id, title or label",
+        "backlogMdAllLabels": "All labels",
+        "backlogMdAllAssignees": "All assignees",
+        "backlogMdStatus": "Status",
+        "backlogMdAssignee": "Assignee",
+        "backlogMdLabels": "Labels",
+        "backlogMdPriority": "Priority",
+        "backlogMdMilestone": "Milestone",
+        "backlogMdDependencies": "Depends on",
+        "backlogMdParent": "Parent",
+        "backlogMdUpdated": "Updated",
+        "backlogMdBack": "Backlog.md tasks",
+        "backlogMdStart": "Start workspace",
+        "backlogMdCriteriaTitle": "Acceptance criteria done",
+        "backlogMdSource": "Backlog.md",
+        "backlogMdNoCheckout": "This project has no checkout to read."
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -10800,7 +10821,10 @@
           "integrationsLink": "Integrations",
           "skillHint": ". After Linear is connected, usage examples stay under Settings → Linear.",
           "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks.",
-          "30255b39dc": "Task providers"
+          "30255b39dc": "Task providers",
+          "backlogMdShowDescription": "Tasks are read from the backlog folder of the selected repository. No sign-in needed.",
+          "backlogMdLabel": "Backlog.md",
+          "backlogMdDescription": "Browse the Markdown tasks in a repository’s backlog folder and start workspaces from them."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Thickness of the pane divider line.",

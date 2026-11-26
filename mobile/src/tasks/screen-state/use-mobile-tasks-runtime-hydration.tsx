@@ -106,7 +106,10 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
     const resume = hydration.ui?.taskResumeState ?? {}
     setGithubProjectHiddenFieldIdsByView(resume.githubProjectHiddenFieldIdsByView ?? {})
 
-    const preferredProviders = normalizeVisibleTaskProviders(settings.visibleTaskProviders)
+    // Backlog.md has no mobile screen yet.
+    const preferredProviders = normalizeVisibleTaskProviders(settings.visibleTaskProviders).filter(
+      (provider) => provider !== 'backlog-md'
+    )
     const linearIsConnected = hydration.linearConnected
     const availableProviders = filterAvailableTaskProviders(preferredProviders, {
       gitlabInstalled: hydration.glabInstalled,

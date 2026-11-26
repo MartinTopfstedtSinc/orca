@@ -50,15 +50,20 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageRuntimeHosts
     [hostRegistryById, taskSource]
   )
   const taskSourceHostAvailability = useMemo<TaskSourceHostAvailability[]>(() => {
-    if (taskSource !== 'github' && taskSource !== 'gitlab') {
+    if (taskSource !== 'github' && taskSource !== 'gitlab' && taskSource !== 'backlog-md') {
       return []
     }
+    const hostAvailability = taskSourceRepoContexts.flatMap((context) => {
+      const host = hostRegistryById.get(context.hostId)
+      const availability = getTaskSourceHostAvailabilityForHost(host, context.hostId)
+      return availability ? [availability] : []
+    })
+    // Backlog.md needs only a reachable host; no CLI sign-in is involved.
+    if (taskSource === 'backlog-md') {
+      return hostAvailability
+    }
     return [
-      ...taskSourceRepoContexts.flatMap((context) => {
-        const host = hostRegistryById.get(context.hostId)
-        const availability = getTaskSourceHostAvailabilityForHost(host, context.hostId)
-        return availability ? [availability] : []
-      }),
+      ...hostAvailability,
       ...getRepoBackedProviderAvailability({
         provider: taskSource,
         contexts: taskSourceRepoContexts,
