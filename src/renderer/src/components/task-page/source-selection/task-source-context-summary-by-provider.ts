@@ -66,7 +66,8 @@ const TASK_SOURCE_CONTEXT_SUMMARY_BUILDERS: Record<
   gitlab: repoBackedSummary,
   linear: (args, t) => accountBackedSummary(args, args.linearWorkspaceName, t),
   jira: (args, t) => accountBackedSummary(args, args.jiraSiteName, t),
-  'azure-devops': (args, t) => accountBackedSummary(args, args.azureDevOpsProjectName, t)
+  'azure-devops': (args, t) => accountBackedSummary(args, args.azureDevOpsProjectName, t),
+  'backlog-md': repoBackedSummary
 }
 
 export function getTaskSourceContextSummary(
