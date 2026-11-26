@@ -5,6 +5,7 @@ import {
 import { AGENT_CLI_UPDATE_RUNTIME_CAPABILITY } from '../../agent-launch/installation/agent-cli-update'
 import { REMOTE_SERVER_UPDATE_CAPABILITY } from '../host-catalog/remote-server-update'
 import { SSH_TARGET_MANAGEMENT_RUNTIME_CAPABILITY } from '../ssh/ssh-target-management'
+import { RUNTIME_RPC_CANCEL_CAPABILITY } from '../rpc/runtime-rpc-cancel'
 import { ENVIRONMENT_DOCTOR_RUNTIME_CAPABILITY } from '../../workspace-setup/environment-doctor/environment-doctor-runtime'
 
 export const REMOTE_RUNTIME_SHARED_CONTROL_CAPABILITY = 'remote-runtime.shared-control.v1' as const
@@ -40,5 +41,6 @@ export const HOST_RUNTIME_CAPABILITIES = [
   SSH_TARGET_MANAGEMENT_RUNTIME_CAPABILITY,
   ENVIRONMENT_DOCTOR_RUNTIME_CAPABILITY,
   USAGE_ANALYTICS_RUNTIME_CAPABILITY,
-  HOST_NOTIFICATION_SETTINGS_RUNTIME_CAPABILITY
+  HOST_NOTIFICATION_SETTINGS_RUNTIME_CAPABILITY,
+  RUNTIME_RPC_CANCEL_CAPABILITY
 ] as const
