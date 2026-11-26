@@ -1,11 +1,16 @@
 import type { PreloadApi } from '../../../../preload/api-types'
 import { createFallbackProxy } from './web-fallback-api'
+import { noopUnsubscribe } from './web-storage'
 import { callRuntimeResult } from '../runtime/client/web-runtime-calls'
 import { mapRepoPathArg } from '@/runtime/source-control/forge/runtime-repo-selector-params'
 import { repoHooksCheckWakeParams } from '../../../../shared/workspace-setup/hooks/repo-hooks-check-wake'
 
 export function createRuntimeNamespaceApi(prefix: string): never {
   return createFallbackProxy([prefix], (path, args) => {
+    // Main-pushed events have no runtime RPC; a subscription call must still return an unsubscribe.
+    if (path.at(-1)?.startsWith('on')) {
+      return noopUnsubscribe
+    }
     const method = `${prefix}.${path.at(-1) ?? ''}`
     return callRuntimeResult(method, mapRuntimeNamespaceArg(prefix, args[0]))
   }) as never

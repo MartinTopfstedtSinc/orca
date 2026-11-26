@@ -84,7 +84,11 @@ export function createWebWorkspaceSessionApi(): Partial<PreloadApi> {
       // localStorage writes synchronously, so there is no deferred web flush.
       flush: async () => {},
       // No local snapshot store: host-run panes read theirs from the host (host-terminal-scrollback-hydration).
-      readTerminalScrollback: async () => null
+      readTerminalScrollback: async () => null,
+      // Declared absent so withFallback's stand-ins don't pass feature checks: web saves whole fields.
+      patchEntries: undefined,
+      desktopRelaysVersion: undefined,
+      applyDesktopRelays: undefined
     }
   }
 }

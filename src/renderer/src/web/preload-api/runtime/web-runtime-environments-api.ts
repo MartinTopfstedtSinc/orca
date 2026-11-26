@@ -42,6 +42,8 @@ import {
 } from '../../runtime/client/web-runtime-session'
 export function createRuntimeEnvironmentsApi(): PreloadApi['runtimeEnvironments'] {
   return {
+    // Desktop-only; declared absent so withFallback's stand-ins don't pass the WSL bridge's feature check.
+    wslHosts: undefined,
     onStatusChanged: subscribeWebRuntimeStatus,
     getStatusSnapshots: async () => readWebRuntimeStatusSnapshots(),
     list: async () => {
