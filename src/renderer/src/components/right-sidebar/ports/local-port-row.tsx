@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Box, Copy, ExternalLink, Info, Plug, Server, Trash2 } from 'lucide-react'
+import { Box, Copy, ExternalLink, Globe, Info, Plug, Server, Trash2 } from 'lucide-react'
 import { getPortOpenBrowserTooltipLabel } from '@/lib/workspace-ports/workspace-port-browser-open'
 import { addressForPort } from '@/lib/workspace-ports/workspace-port-urls'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,8 @@ export function LocalPortRow({
   onStop,
   onShowDetails,
   onOpenInBrowser,
-  onForward
+  onForward,
+  onCopyPublicUrl
 }: {
   port: WorkspacePort
   onStop: (port: WorkspacePort) => void
@@ -35,6 +36,8 @@ export function LocalPortRow({
   onOpenInBrowser?: (port: WorkspacePort, event?: React.MouseEvent<HTMLButtonElement>) => void
   /** Present only when this client can forward the port over SSH and it isn't forwarded yet. */
   onForward?: (port: WorkspacePort) => void
+  /** Present only when the port's server publishes ports on a public route (Eclipse Che). */
+  onCopyPublicUrl?: (port: WorkspacePort) => void
 }): React.JSX.Element {
   const t = useTranslate()
   const handleCopy = useCallback(() => {
@@ -258,6 +261,15 @@ export function LocalPortRow({
           <Copy size={13} />
           {t('auto.components.right.sidebar.PortsPanel.792baeb7ed', 'Copy Address')}
         </ContextMenuItem>
+        {onCopyPublicUrl && (
+          <ContextMenuItem
+            className={LOCAL_PORT_MENU_ITEM_CLASS}
+            onSelect={() => onCopyPublicUrl(port)}
+          >
+            <Globe size={13} />
+            {t('auto.components.right.sidebar.PortsPanel.copyPublicUrl', 'Copy Public URL')}
+          </ContextMenuItem>
+        )}
         <ContextMenuItem
           className={LOCAL_PORT_MENU_ITEM_CLASS}
           onSelect={() => {

@@ -1,4 +1,10 @@
-import { NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY } from '../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
+import {
+  NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY,
+  WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY
+} from '../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
+import { isWebClientLocation } from '@/app-shell/platform/web-client-location'
+import { BROWSER_SCREENCAST_RUNTIME_CAPABILITY } from '../../../../shared/browser/runtime/browser-runtime-capabilities'
+import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import { readCachedRuntimeEnvironmentCapability } from '@/runtime/rpc/compatibility/runtime-compatibility-cache'
 import { resolveOwner } from '@/lib/workspace/ownership/resolve-owner'
 import type { WorktreeOperationRouteState } from '@/lib/workspace/ownership/worktree-operation-route'
@@ -37,6 +43,16 @@ export function sshForwardsPorts(targetId: string): boolean {
   )
 }
 
+/** The desktop's bridge for forwarding a server port to this machine. The web client's fallback
+ *  `window.api` answers every name, but a browser tab cannot listen on a local port. */
+export function desktopPortForwardsApi():
+  | typeof window.api.runtimeEnvironments.portForwards
+  | undefined {
+  return typeof window === 'undefined' || isWebClientLocation()
+    ? undefined
+    : window.api?.runtimeEnvironments?.portForwards
+}
+
 /** Whether this desktop can forward the paired server's localhost ports: over SSH for a server
  *  deployed that way, else over its own connection, from its last probed status. */
 export function serverForwardsPorts(environmentId: string): boolean {
@@ -45,12 +61,35 @@ export function serverForwardsPorts(environmentId: string): boolean {
     return sshForwardsPorts(sshTargetId)
   }
   return (
-    typeof window !== 'undefined' &&
-    window.api?.runtimeEnvironments?.portForwards !== undefined &&
+    desktopPortForwardsApi() !== undefined &&
     readCachedRuntimeEnvironmentCapability(
       environmentId,
       NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY
     ) === true
+  )
+}
+
+/** Whether the paired server publishes its localhost ports on a public route (Eclipse Che). */
+export function serverPublishesPorts(environmentId: string): boolean {
+  return (
+    readCachedRuntimeEnvironmentCapability(
+      environmentId,
+      WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY
+    ) === true
+  )
+}
+
+/** The web client hosts no pages, so without a server browser a Che server's ports open at its
+ *  public route in a real browser tab rather than in a built-in tab that would stay blank. */
+export function serverPortsOpenOnlyOutsideOrca(target: RuntimeClientTarget): boolean {
+  return (
+    target.kind === 'environment' &&
+    isWebClientLocation() &&
+    serverPublishesPorts(target.environmentId) &&
+    readCachedRuntimeEnvironmentCapability(
+      target.environmentId,
+      BROWSER_SCREENCAST_RUNTIME_CAPABILITY
+    ) !== true
   )
 }
 
@@ -79,4 +118,15 @@ export function serverForwardsWorkspacePorts(
   worktreeId: string | null | undefined
 ): boolean {
   return serverForwardsPorts(environmentId) && workspaceRunsOnServer(environmentId, worktreeId)
+}
+
+/** A link to this workspace's server localhost opens at the server's public route from this client. */
+export function serverPublishesWorkspacePortsHere(
+  environmentId: string,
+  worktreeId: string | null | undefined
+): boolean {
+  return (
+    serverPortsOpenOnlyOutsideOrca({ kind: 'environment', environmentId }) &&
+    (!worktreeId || workspaceRunsOnServer(environmentId, worktreeId))
+  )
 }

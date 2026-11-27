@@ -1,10 +1,11 @@
 import { useAppStore } from '../../../store/index'
 import type { PortForwardEntry } from '../../../../../shared/remote-runtime/ssh/ssh-types'
 import { announceRestoredPortForwardMoves } from '../../../lib/workspace-ports/server-port-forward-open'
+import { desktopPortForwardsApi } from '../../../lib/workspace-ports/server-port-forward-support'
 
 /** Mirrors paired servers' forwards into the store; a renderer reload re-reads the ones main still holds. */
 export function registerRuntimePortForwardsIpcBridge(unsubs: (() => void)[]): void {
-  const api = window.api.runtimeEnvironments.portForwards
+  const api = desktopPortForwardsApi()
   if (!api) {
     return
   }

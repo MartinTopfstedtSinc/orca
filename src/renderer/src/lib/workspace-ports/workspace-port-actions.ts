@@ -1,4 +1,5 @@
 import { portSystemBrowserOpener } from './server-port-forward-open'
+import { serverPortsOpenOnlyOutsideOrca } from './server-port-forward-support'
 import { readRuntimeStatuses } from '@/store/slices/runtime-status/views/runtime-status-owner'
 import { translate } from '@/i18n/i18n'
 import { activateAndRevealWorktree } from '@/lib/workspace/activation/worktree-activation'
@@ -109,7 +110,7 @@ export async function openWorkspacePortInBrowser(args: {
     localhostLabelRoute: args.localhostLabelRoute
   })
   const openInSystemBrowser =
-    args.openInOrcaBrowser === false
+    args.openInOrcaBrowser === false || serverPortsOpenOnlyOutsideOrca(args.runtimeTarget)
       ? portSystemBrowserOpener(
           url,
           args.runtimeTarget,

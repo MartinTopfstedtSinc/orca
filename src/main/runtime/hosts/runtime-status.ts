@@ -69,6 +69,8 @@ import { getManagedServerActions } from './management/managed-server-actions-reg
 import { isRemoteServerUpdaterConfigured } from './management/remote-server-updater'
 import { REMOTE_SERVER_UPDATE_CAPABILITY } from '../../../shared/remote-runtime/host-catalog/remote-server-update'
 import { getRecipeVmWaker } from '../workspaces/sleep/recipe-vm-waker-registry'
+import { getChePortPublicUrls } from '../../che/ports/che-port-exposure-registry'
+import { WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY } from '../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
 import { HOST_RECIPE_VM_WAKE_CAPABILITY } from '../../../shared/remote-runtime/recipe-vm-wake'
 import { isDesktopBrowserBridgeHostEnabled } from '../desktop-browser-bridge/desktop-browser-bridge-registry'
 import { DESKTOP_BROWSER_BRIDGE_RUNTIME_CAPABILITY } from '../../../shared/browser/client-hosting/desktop-browser-bridge-protocol'
@@ -150,6 +152,9 @@ export abstract class OrcaRuntimeWithGetStatus extends RuntimeWorkspaceChangeEve
     capabilities.push(...googleRuntimeCapabilities())
     if (getManagedServerActions()) {
       capabilities.push(MANAGED_SERVER_RUNTIME_CAPABILITY)
+    }
+    if (getChePortPublicUrls()) {
+      capabilities.push(WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY)
     }
     if (getRecipeVmWaker()) {
       capabilities.push(HOST_RECIPE_VM_WAKE_CAPABILITY)

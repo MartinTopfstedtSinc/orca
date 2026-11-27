@@ -282,7 +282,7 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
   },
   {
     name: 'ports',
-    keys: ['ports'],
+    keys: ['ports', 'ports public-url'],
     load: async () => (await import('../workspace-ports/ports.js')).PORTS_HANDLERS
   }
 ]

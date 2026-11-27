@@ -1095,6 +1095,7 @@ import {
   WorkspacePortKillHostParams,
   WorkspacePortKillParams,
   WorkspacePortProbePageParams,
+  WorkspacePortPublicUrlParams,
   WorkspacePortScanHostParams,
   WorkspacePortScanParams
 } from './workspaces/workspace-ports-params'
@@ -2335,6 +2336,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'workspacePorts.kill': WorkspacePortKillParams,
   'workspacePorts.killHost': WorkspacePortKillHostParams,
   'workspacePorts.probePage': WorkspacePortProbePageParams,
+  'workspacePorts.publicUrl': WorkspacePortPublicUrlParams,
   'workspacePorts.scan': WorkspacePortScanParams,
   'workspacePorts.scanHost': WorkspacePortScanHostParams,
   'worktree.activate': WorktreeActivate,

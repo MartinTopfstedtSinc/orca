@@ -19,9 +19,19 @@ import {
 import { resolveWorktreeHostRouting } from '../catalog/worktree-launch-host-repo'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host/execution-host'
 import { RuntimeWorkspaceSleepOperations } from '../sleep/runtime-workspace-sleep-operations'
+import { getChePortPublicUrls } from '../../../che/ports/che-port-exposure-registry'
+
+async function withChePublicBaseUrl<T extends WorkspacePortScanResult>(
+  scan: T | Promise<T>
+): Promise<T> {
+  const result = await scan
+  const publicBaseUrl = getChePortPublicUrls()?.publicBaseUrl()
+  return publicBaseUrl ? { ...result, publicBaseUrl } : result
+}
+
 export abstract class RuntimeWorkspacePortOperations extends RuntimeWorkspaceSleepOperations {
   async scanWorkspacePorts(repoId?: string): Promise<WorkspacePortScanResult> {
-    return scanWorkspacePortProbes(await this.getWorkspacePortProbes(repoId))
+    return withChePublicBaseUrl(scanWorkspacePortProbes(await this.getWorkspacePortProbes(repoId)))
   }
 
   async killWorkspacePort(args: WorkspacePortKillRequest): Promise<WorkspacePortKillResult> {
@@ -31,7 +41,11 @@ export abstract class RuntimeWorkspacePortOperations extends RuntimeWorkspaceSle
   // Why the workspace, not a client-named host: this server resolves where the workspace runs.
   async scanWorkspacePortsOnHost(worktreeSelector: string): Promise<WorkspacePortHostScanResult> {
     const { executionHostId } = await this.resolveRuntimeFileTarget(worktreeSelector)
-    return scanWorkspacePortsOnExecutionHost(executionHostId, this.getWorkspacePortHostDeps())
+    const scan = await scanWorkspacePortsOnExecutionHost(
+      executionHostId,
+      this.getWorkspacePortHostDeps()
+    )
+    return executionHostId === LOCAL_EXECUTION_HOST_ID ? withChePublicBaseUrl(scan) : scan
   }
 
   async killWorkspacePortOnHost(

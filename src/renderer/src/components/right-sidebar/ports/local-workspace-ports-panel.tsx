@@ -34,6 +34,8 @@ import { portForwardOwnerKey, type PortForwardOwner } from './port-forward-owner
 import type { PortForwardEntry } from '../../../../../shared/remote-runtime/ssh/ssh-types'
 import { useRuntimeEnvironmentCapability } from '@/runtime/rpc/compatibility/use-runtime-environment-capability'
 import { NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY } from '../../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
+import { usePortPublicUrlCopy } from '@/lib/workspace-ports/use-port-public-url-copy'
+import { desktopPortForwardsApi } from '@/lib/workspace-ports/server-port-forward-support'
 
 const NO_FORWARDS: readonly PortForwardEntry[] = []
 
@@ -80,7 +82,7 @@ export function LocalWorkspacePortsPanel({
   )
   // Older servers have no network.portForward, and web clients can't listen here, so neither offers Forward.
   const serverForwards = useRuntimeEnvironmentCapability(
-    window.api.runtimeEnvironments.portForwards ? forwardEnvironmentId : null,
+    desktopPortForwardsApi() ? forwardEnvironmentId : null,
     NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY
   )
   const sshConnected = useAppStore(
@@ -262,6 +264,7 @@ export function LocalWorkspacePortsPanel({
     [forwardedKeys]
   )
   const onForwardPort = canForward ? handleForwardPort : undefined
+  const onCopyPublicUrl = usePortPublicUrlCopy(runtimeTarget)
 
   const { activePorts, otherWorkspacePorts, externalPorts } = useMemo(
     () => getLocalWorkspacePortSections(displayScan, activeRepoId, activeWorktree?.id),
@@ -349,6 +352,7 @@ export function LocalWorkspacePortsPanel({
             onShowDetails={setDetailsPort}
             onOpenInBrowser={handleOpenPortInBrowser}
             onForwardPort={onForwardPort}
+            onCopyPublicUrl={onCopyPublicUrl}
             isPortForwarded={isPortForwarded}
           />
           <LocalPortSection
@@ -361,6 +365,7 @@ export function LocalWorkspacePortsPanel({
             onShowDetails={setDetailsPort}
             onOpenInBrowser={handleOpenPortInBrowser}
             onForwardPort={onForwardPort}
+            onCopyPublicUrl={onCopyPublicUrl}
             isPortForwarded={isPortForwarded}
           />
           <LocalPortSection
@@ -373,6 +378,7 @@ export function LocalWorkspacePortsPanel({
             onShowDetails={setDetailsPort}
             onOpenInBrowser={handleOpenPortInBrowser}
             onForwardPort={onForwardPort}
+            onCopyPublicUrl={onCopyPublicUrl}
             isPortForwarded={isPortForwarded}
           />
         </>

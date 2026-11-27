@@ -1,6 +1,7 @@
 import type { HttpLinkSourceOwner, HttpLinkStoreState } from './http-link-routing'
 import {
   serverForwardsWorkspacePorts,
+  serverPublishesWorkspacePortsHere,
   sshForwardsPorts
 } from '@/lib/workspace-ports/server-port-forward-support'
 import { isLoopbackBrowserUrl } from '../../../../../shared/browser/navigation/loopback-browser-url'
@@ -27,7 +28,8 @@ export type LocalhostLinkWorktree = {
 }
 
 // Why: a remote process's loopback URL names its own host; only that host's Orca browser reaches it,
-// unless its SSH host or paired server forwards its ports here, where the system browser opens the forward.
+// unless its SSH host or paired server forwards its ports here, where the system browser opens the forward,
+// or a Che server publishes them to this web client, which opens them at the server's public route.
 export function isRemoteLoopbackHttpLink(
   url: string | undefined,
   sourceOwner: HttpLinkSourceOwner | undefined,
@@ -36,7 +38,8 @@ export function isRemoteLoopbackHttpLink(
   return (
     ((sourceOwner?.kind === 'ssh' && !sshForwardsPorts(sourceOwner.connectionId)) ||
       (sourceOwner?.kind === 'runtime' &&
-        !serverForwardsWorkspacePorts(sourceOwner.runtimeEnvironmentId, worktreeId))) &&
+        !serverForwardsWorkspacePorts(sourceOwner.runtimeEnvironmentId, worktreeId) &&
+        !serverPublishesWorkspacePortsHere(sourceOwner.runtimeEnvironmentId, worktreeId))) &&
     url !== undefined &&
     isLoopbackHttpUrl(url)
   )

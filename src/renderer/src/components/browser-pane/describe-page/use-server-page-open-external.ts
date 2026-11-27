@@ -1,7 +1,10 @@
 import { useRuntimeEnvironmentCapability } from '@/runtime/rpc/compatibility/use-runtime-environment-capability'
 import { openAppHttpLink } from '@/lib/browser/navigation/app-http-link-open'
 import { openServerLoopbackInSystemBrowser } from '@/lib/workspace-ports/server-port-forward-open'
-import { workspaceRunsOnServer } from '@/lib/workspace-ports/server-port-forward-support'
+import {
+  desktopPortForwardsApi,
+  workspaceRunsOnServer
+} from '@/lib/workspace-ports/server-port-forward-support'
 import { NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY } from '../../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
 import {
   normalizeExternalBrowserUrl,
@@ -18,7 +21,7 @@ export function useServerPageOpenExternal(
 ): (() => void) | null {
   // Web clients have no loopback of their own to forward to.
   const serverForwards = useRuntimeEnvironmentCapability(
-    window.api.runtimeEnvironments.portForwards ? environmentId : null,
+    desktopPortForwardsApi() ? environmentId : null,
     NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY
   )
   const url = normalizeExternalBrowserUrl(redactKagiSessionToken(pageUrl))

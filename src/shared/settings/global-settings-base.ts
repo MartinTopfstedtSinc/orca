@@ -1,4 +1,5 @@
 import type { AntigravityChatAuthSettings } from '../agent-accounts/antigravity/antigravity-chat-auth-config'
+import type { ChePortExposureSettings } from '../workspace/ports/workspace-port-public-url'
 import type { EmulatorOpeningSettings } from '../emulator/emulator-opening-preferences'
 import type { BrowserExtensionGlobalSettings } from '../browser/extensions/browser-extension-settings'
 import type { ClaudeAgentViewSettings } from '../agent-hook-listener/providers/claude/view/claude-agent-view'
@@ -87,4 +88,5 @@ export type GlobalSettingsBase = AntigravityChatAuthSettings &
   UiLanguageSettings &
   ChatDeleteSettings &
   AzureDevOpsBoardsSettings &
-  AzureDevOpsVisibilityGuardSettings
+  AzureDevOpsVisibilityGuardSettings &
+  ChePortExposureSettings

@@ -2961,6 +2961,13 @@
           "forwardedUrl": {
             "openedIpv4": "Opened 127.0.0.1:{{port}} instead of localhost",
             "openedIpv4Reason": "Another app on this computer uses localhost:{{port}}."
+          },
+          "publicUrl": {
+            "failed": "Couldn't open port {{port}} through the server's public route.",
+            "opened": "Opened port {{port}} via Che route",
+            "pathModeLimitation": "Che path routes need apps that use relative URLs, or the base path in $ORCA_PORT_PUBLIC_PATH_PREFIX.",
+            "copied": "Public URL copied",
+            "evicted": "Port {{port}} gave up its public URL to make room"
           }
         }
       },
@@ -15571,7 +15578,8 @@
             "remotePortOutOfRange": "Remote port must be 1–65535",
             "localPortOutOfRange": "Local port must be 1–65535",
             "localPortInUse": "Port {{port}} is already in use. Choose a different local port.",
-            "localPortRequiresPrivileges": "Port {{port}} requires elevated privileges. Use a local port ≥ 1024."
+            "localPortRequiresPrivileges": "Port {{port}} requires elevated privileges. Use a local port ≥ 1024.",
+            "copyPublicUrl": "Copy Public URL"
           },
           "Search": {
             "1abfb25a66": "Type to search in files",
@@ -24327,6 +24335,14 @@
       },
       "git": {
         "branchPrefixHostGitUsername": "Git username on {{host}}"
+      },
+      "chePortExposure": {
+        "auto": "Automatic",
+        "path": "Path on the Che host",
+        "slots": "Own subdomain (slots)",
+        "off": "Off",
+        "title": "Public port URLs",
+        "description": "How this Che workspace opens its ports in a browser. Subdomain slots need endpoints in the editor definition; path routes need apps that use relative URLs."
       }
     },
     "agentChildRow": {
