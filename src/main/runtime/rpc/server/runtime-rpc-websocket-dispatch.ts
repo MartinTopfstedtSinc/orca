@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- Why: upstream keeps this dispatcher at the limit; the fork adds one rpc.cancel check, handled in runtime-rpc-binary-routing.ts. */
 import type { WebSocket } from 'ws'
 import { callerScopeOf, devicePrincipalOf } from './pairing/device-principal'
 import { registerSocketDeviceKey } from './runtime-rpc-device-key-registration'

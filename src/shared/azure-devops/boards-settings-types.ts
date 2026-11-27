@@ -8,6 +8,12 @@ export type AzureDevOpsBoardsSettings = {
   azureDevOpsBacklogColumnWidths: Record<string, Record<string, number>> | null
 }
 
+/** Kept beside the Boards settings so the max-lines-limited settings module stays under its cap. */
+export type AzureDevOpsVisibilityGuardSettings = {
+  /** Why: one-shot guard to show Azure DevOps to existing profiles once, like the Jira guard. */
+  visibleTaskProvidersDefaultedForAzureDevOps: boolean
+}
+
 /** Nothing is remembered until a project is opened, so every view setting starts empty. */
 export const DEFAULT_AZURE_DEVOPS_BOARDS_SETTINGS: AzureDevOpsBoardsSettings = {
   azureDevOpsTeamSelection: null,
