@@ -25,6 +25,7 @@ import { ORCA_SESSION_ADDRESS_PREFIX } from '../../../../../../shared/agent-sess
 import { ORCHESTRATION_SESSION_CALLER_ERROR_CODES as SESSION_CODES } from '../../../../../../shared/orchestration/orchestration-session-caller-codes'
 import { resolveDispatchCreator } from '../runs/dispatch-creator'
 import { checkedWorkerOrigin } from '../../bots-items-worker-origin'
+import { placeOnAgentWorkspace, remoteServer } from '../../../../../che/che-worker-start'
 import { decideStartMode, noteTerminalFallbackOnItem } from './start/worker-chat-lineage'
 import { withKeepOpenDefault } from './start/worker-keep-open-default'
 import { withRetryWorkerLaunchDefaults } from './start/worker-retry-launch-defaults'
@@ -73,7 +74,7 @@ export async function startWorker(
   startFollowUp?: WorkerFollowUp
 ): Promise<unknown> {
   const { runtime, orchestrationMutation, orchestrationCaller } = ctx
-  if (startParams.origin !== undefined && startParams.on) {
+  if (startParams.origin !== undefined && remoteServer(startParams)) {
     throw new OrchestrationError(
       'invalid_argument',
       "--item can't be combined with --on: worker-start --item starts workers on this computer, where the item is. No effects were applied.",
@@ -105,16 +106,18 @@ export async function startWorker(
   const { mode, chatLineage } = decideStartMode(runtime, db, params, orchestrationCaller, followUp)
   if (params.on) {
     // Remote workers are terminal-only; carry the mode receipt to explain structured-preference fallback.
-    const receipt = await startFederatedWorker({
-      params: linkedParams,
-      runtime,
-      db,
-      bindRunId: () => bindRun().run.id,
-      task: existingTask,
-      taskDeps,
-      orchestrationMutation,
-      callerSession: orchestrationCaller
-    })
+    const receipt = await placeOnAgentWorkspace(runtime, linkedParams, (placed) =>
+      startFederatedWorker({
+        params: placed,
+        runtime,
+        db,
+        bindRunId: () => bindRun().run.id,
+        task: existingTask,
+        taskDeps,
+        orchestrationMutation,
+        callerSession: orchestrationCaller
+      })
+    )
     await stopHelperAfterStart(runtime, receipt, orchestrationMutation)
     const placed = receipt && typeof receipt === 'object' ? { ...receipt, mode } : receipt
     return withLink(withRun(withKeepOpenDefault(runtime, params.worktree, placed)))

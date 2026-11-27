@@ -1,30 +1,24 @@
-import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { lazyZodSchema } from '../../shared/schema/lazy-zod-schema'
-import { upsertEphemeralVmRuntime } from '../../shared/remote-runtime/ephemeral-vm-store/ephemeral-vm-runtime-store'
 import {
-  addEnvironmentFromPairingCode,
   listEnvironments,
   updateEnvironmentFromPairingCode
 } from '../../shared/remote-runtime/host-store/runtime-environment-store'
-import { redactRuntimeEnvironment } from '../../shared/remote-runtime/host-catalog/runtime-environments'
-import { defineMethod, InvalidArgumentError } from '../runtime/rpc/core'
-import { forgetClusterCheck, logUnavailable, probe } from './che-workspace-probe'
+import { defineMethod } from '../runtime/rpc/core'
+import { logUnavailable, probe } from './che-workspace-probe'
+import { cancelCheProvision, provisionCheWorkspace } from './che-workspace-provision'
 import {
   cleanup,
   dataPath,
   exclusive,
   find,
   lifecycle,
-  operations,
   provider,
   recipe,
   records,
   resource,
   update
 } from './che-workspace-records'
-
-const controllers = new Map<string, AbortController>()
 
 const RuntimeId = lazyZodSchema(() => z.object({ runtimeId: z.string().min(1) }))
 const WorkspaceId = lazyZodSchema(() => z.object({ workspaceId: z.string().min(1) }))
@@ -87,122 +81,18 @@ export const CHE_WORKSPACE_METHODS = [
     name: 'cheWorkspace.provision',
     permission: 'host-admin',
     params: ProvisionParams,
-    handler: async (args, { runtime, signal }) => {
-      const repo = runtime.listRepos().find((entry) => entry.id === args.repoId)
-      const id = randomUUID()
-      const key = args.provisionId ?? id
-      if (controllers.has(key)) {
-        throw new InvalidArgumentError('Provisioning is already running for this request.')
-      }
-      // Register first so cancelProvision also stops a create still waiting on the probe.
-      const controller = new AbortController()
-      controllers.set(key, controller)
-      const abort = () => controller.abort()
-      signal?.addEventListener('abort', abort, { once: true })
-      if (signal?.aborted) {
-        abort()
-      }
-      let checked: Awaited<ReturnType<typeof probe>>
-      try {
-        checked = await probe(repo)
-      } catch (error) {
-        signal?.removeEventListener('abort', abort)
-        controllers.delete(key)
-        throw error
-      }
-      if (controller.signal.aborted || 'reason' in checked) {
-        signal?.removeEventListener('abort', abort)
-        controllers.delete(key)
-        if (!('reason' in checked)) {
-          return {
-            ok: false as const,
-            error: 'Provisioning was cancelled.',
-            stdout: '',
-            stderr: ''
-          }
-        }
-        // Recheck at create time: the composer's recipe list can be stale.
-        const error = checked.reason ?? 'Agent workspaces are not configured on this Orca server.'
-        logUnavailable(error)
-        return { ok: false as const, fallback: true, error, stdout: '', stderr: '' }
-      }
-      const { repoUrl } = checked
-      const backend = provider()
-      const allocation = backend.allocation(id)
-      const now = Date.now()
-      upsertEphemeralVmRuntime(dataPath(), {
-        id,
-        recipeId: recipe.id,
-        recipe,
-        repoId: args.repoId,
-        projectId: args.projectId,
-        workspaceId: args.workspaceId,
-        workspaceName: args.workspaceName,
-        status: 'provisioning',
-        cleanupStatus: 'not_started',
-        createdAt: now,
-        updatedAt: now,
-        recipeResult: {
-          schemaVersion: 1,
-          pairingCode: 'pending',
-          projectRoot: '/projects/source',
-          userData: allocation
-        }
-      })
-      operations.add(id)
-      try {
-        const recipeResult = await backend.create(allocation, repoUrl, controller.signal)
-        const environment = await addEnvironmentFromPairingCode(dataPath(), {
-          name: `${args.workspaceName || 'Che workspace'} (${id.slice(0, 8)})`,
-          pairingCode: recipeResult.pairingCode,
-          source: 'ephemeral-vm'
-        })
-        const row = update(id, {
-          status: 'running',
-          connectionMode: 'orca-server',
-          runtimeEnvironmentId: environment.id,
-          recipeResult
-        })
-        return {
-          ok: true as const,
-          connectionType: 'orca-server' as const,
-          runtime: row,
-          environment: redactRuntimeEnvironment(environment),
-          stderr: '',
-          warnings: []
-        }
-      } catch (error) {
-        // Rollback is not cancellable; a failed rollback stays recorded for retry.
-        await cleanup(find(id))
-        // Failures before the DevWorkspace exists (quota, admission, Route) fall back to this host.
-        const fallback =
-          error instanceof Error && (error as Error & { fallback?: boolean }).fallback === true
-        if (fallback) {
-          forgetClusterCheck()
-        }
-        return {
-          ok: false as const,
-          ...(fallback ? { fallback: true } : {}),
-          error: error instanceof Error ? error.message : String(error),
-          stdout: '',
-          stderr: ''
-        }
-      } finally {
-        signal?.removeEventListener('abort', abort)
-        controllers.delete(key)
-        operations.delete(id)
-      }
-    }
+    handler: (args, { runtime, signal }) =>
+      provisionCheWorkspace(
+        runtime.listRepos().find((entry) => entry.id === args.repoId),
+        args,
+        signal
+      )
   }),
   defineMethod({
     name: 'cheWorkspace.cancelProvision',
     permission: 'host-admin',
     params: ProvisionIdParams,
-    handler: ({ provisionId }) => {
-      const controller = controllers.get(provisionId)
-      controller?.abort()
-      return { cancelled: Boolean(controller) }
-    }
+    handler: ({ provisionId }) => ({ cancelled: cancelCheProvision(provisionId) })
   }),
   defineMethod({
     name: 'cheWorkspace.attachWorkspace',

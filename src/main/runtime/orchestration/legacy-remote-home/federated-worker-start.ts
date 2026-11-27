@@ -133,6 +133,8 @@ export async function startFederatedWorker(args: FederatedWorkerStartRequest): P
     taskParentId: params.parent,
     taskRunId: runId,
     retryOf: params.retryOf,
+    // Only an agent workspace's start keeps a bot item here: no other `--on` takes `--item`.
+    ...(params.origin ? { originRef: params.origin } : {}),
     startOptions: {
       on: server.environmentId,
       serverName: server.name,
