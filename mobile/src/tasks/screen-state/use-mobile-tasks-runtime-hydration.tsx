@@ -70,21 +70,9 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
     setSelectedLinearWorkspaceId,
     setShowCreateTargetPicker,
     setShowCreateTask,
-    setShowGitHubIssueSourcePicker,
-    setShowGitHubKindPicker,
-    setShowGitHubPagePicker,
-    setShowGitHubPresetPicker,
-    setShowGitHubProjectFieldsPicker,
     setShowGitHubProjectPicker,
     setShowGitHubProjectViewPicker,
-    setShowGitLabFilterPicker,
-    setShowGitLabViewPicker,
     setShowLinearConnect,
-    setShowLinearDisplayPicker,
-    setShowLinearFilterPicker,
-    setShowLinearTeamPicker,
-    setShowLinearWorkspacePicker,
-    setShowRepoPicker,
     setSelectedRepoIds,
     setShowFilterSheet,
     setTaskStateHydrated,
@@ -193,22 +181,10 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
       setGithubProjectHiddenFieldIdsByView({})
       setTaskStateHydrated(false)
       setTasksSupportState({ kind: 'unknown', client: null })
-      setShowLinearWorkspacePicker(false)
-      setShowLinearTeamPicker(false)
-      setShowLinearDisplayPicker(false)
       setShowLinearConnect(false)
-      setShowGitHubKindPicker(false)
-      setShowGitHubPresetPicker(false)
-      setShowGitLabViewPicker(false)
-      setShowGitLabFilterPicker(false)
-      setShowLinearFilterPicker(false)
       setShowFilterSheet(false)
-      setShowRepoPicker(false)
-      setShowGitHubIssueSourcePicker(false)
-      setShowGitHubPagePicker(false)
       setShowGitHubProjectPicker(false)
       setShowGitHubProjectViewPicker(false)
-      setShowGitHubProjectFieldsPicker(false)
       setPendingGitHubProjectViewSelection(null)
       setProjectRepoNotInOrca(null)
       setDetailPayload(null)
@@ -227,22 +203,10 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
     let stale = false
     setTaskStateHydrated(false)
     setTasksSupportState({ kind: 'unknown', client })
-    setShowLinearWorkspacePicker(false)
-    setShowLinearTeamPicker(false)
-    setShowLinearDisplayPicker(false)
     setShowLinearConnect(false)
-    setShowGitHubKindPicker(false)
-    setShowGitHubPresetPicker(false)
-    setShowGitLabViewPicker(false)
-    setShowGitLabFilterPicker(false)
-    setShowLinearFilterPicker(false)
     setShowFilterSheet(false)
-    setShowRepoPicker(false)
-    setShowGitHubIssueSourcePicker(false)
-    setShowGitHubPagePicker(false)
     setShowGitHubProjectPicker(false)
     setShowGitHubProjectViewPicker(false)
-    setShowGitHubProjectFieldsPicker(false)
     setPendingGitHubProjectViewSelection(null)
     setProjectRepoNotInOrca(null)
     setDetailPayload(null)
@@ -288,22 +252,10 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
         setItems([])
         resetGitHubItemsState()
         setGithubProjectTable(null)
-        setShowLinearWorkspacePicker(false)
-        setShowLinearTeamPicker(false)
-        setShowLinearDisplayPicker(false)
         setShowLinearConnect(false)
-        setShowGitHubKindPicker(false)
-        setShowGitHubPresetPicker(false)
-        setShowGitLabViewPicker(false)
-        setShowGitLabFilterPicker(false)
-        setShowLinearFilterPicker(false)
         setShowFilterSheet(false)
-        setShowRepoPicker(false)
-        setShowGitHubIssueSourcePicker(false)
-        setShowGitHubPagePicker(false)
         setShowGitHubProjectPicker(false)
         setShowGitHubProjectViewPicker(false)
-        setShowGitHubProjectFieldsPicker(false)
         setPendingGitHubProjectViewSelection(null)
         setActionItem(null)
         setProjectRowItem(null)
