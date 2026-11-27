@@ -32,7 +32,9 @@ export const WorkspacePortPublicUrlParams = lazyZodSchema(() =>
       .string()
       .max(8192)
       .refine((path) => path.startsWith('/') && !path.startsWith('//'), 'Path must start with /')
-      .optional()
+      .optional(),
+    // Slot mode: false returns the bare URL (to copy) instead of a one-time sign-in link.
+    ticket: z.boolean().optional()
   })
 )
 

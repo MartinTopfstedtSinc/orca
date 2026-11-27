@@ -2,7 +2,12 @@ import type { WorkspacePortPublicUrl } from '../../../shared/workspace/ports/wor
 
 /** What the rest of the runtime needs from Che port exposure, without loading discovery or the proxy. */
 export type ChePortPublicUrls = {
-  publicUrl(port: number, path?: string): WorkspacePortPublicUrl | null
+  /** In slot mode this assigns a slot and, with `ticket`, mints a one-time sign-in: gestures only. */
+  publicUrl(
+    port: number,
+    path?: string,
+    options?: { ticket?: boolean }
+  ): Promise<WorkspacePortPublicUrl | null>
   /** `…/__orca/port/`: append `<port>/`. Side-effect free, for scans; null when no path route serves. */
   publicBaseUrl(): string | null
   ptyEnv(): Record<string, string>

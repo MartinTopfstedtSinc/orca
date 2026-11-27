@@ -153,16 +153,15 @@ export function cheUpstreamRequestHeaders(
 /** Response headers for the browser, with redirects and cookies kept under the public URL. */
 export function cheBrowserResponseHeaders(
   headers: IncomingHttpHeaders,
-  location: ChePortPublicLocation,
-  sharedOrigin: boolean
+  location: ChePortPublicLocation
 ): OutgoingHttpHeaders {
   const out: OutgoingHttpHeaders = {}
   for (const [name, value] of Object.entries(headers)) {
     if (value === undefined || HOP_BY_HOP.has(name)) {
       continue
     }
-    // On the shared Che origin an app could otherwise wipe the dashboard's and other workspaces' data.
-    if (sharedOrigin && name === 'clear-site-data') {
+    // Che's origin is shared, and "cookies" clears a slot host's whole registrable domain.
+    if (name === 'clear-site-data') {
       continue
     }
     if (name === 'location' && typeof value === 'string') {

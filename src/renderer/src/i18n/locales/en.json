@@ -2966,7 +2966,8 @@
             "failed": "Couldn't open port {{port}} through the server's public route.",
             "opened": "Opened port {{port}} via Che route",
             "pathModeLimitation": "Che path routes need apps that use relative URLs, or the base path in $ORCA_PORT_PUBLIC_PATH_PREFIX.",
-            "copied": "Public URL copied"
+            "copied": "Public URL copied",
+            "evicted": "Port {{port}} gave up its public URL to make room"
           }
         }
       },

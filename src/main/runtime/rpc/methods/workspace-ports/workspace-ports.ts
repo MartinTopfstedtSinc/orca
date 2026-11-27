@@ -39,7 +39,9 @@ export const WORKSPACE_PORT_METHODS = [
     permission: 'workspace',
     params: WorkspacePortPublicUrlParams,
     handler: async (params) => {
-      const url = getChePortPublicUrls()?.publicUrl(params.port, params.path)
+      const url = await getChePortPublicUrls()?.publicUrl(params.port, params.path, {
+        ticket: params.ticket
+      })
       if (!url) {
         throw new Error('public_port_url_unavailable')
       }

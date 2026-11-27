@@ -99,8 +99,7 @@ describe('cheBrowserResponseHeaders', () => {
         location: '/next',
         'transfer-encoding': 'chunked'
       },
-      target,
-      true
+      target
     )
     expect(headers).toEqual({
       'set-cookie': [`app=1; Path=${PREFIX}/`],

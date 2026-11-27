@@ -19,5 +19,20 @@ export const PORTS_COMMAND_SPECS: CommandSpec[] = [
       'orca ports --all',
       "orca ports --json | jq -r '.result.ports[0].advertisedUrl'"
     ]
+  },
+  {
+    path: ['ports', 'public-url'],
+    summary: "Print a browser URL for a localhost port on an Eclipse Che server's public route",
+    usage: 'orca ports public-url --port <n> [--path </p>] [--bare] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'port', 'path', 'bare'],
+    notes: [
+      'Only Che servers publish ports; elsewhere the port is already reachable as localhost.',
+      'Path routes (…/6768/__orca/port/<n>/) need apps that use relative URLs or the base path in $ORCA_PORT_PUBLIC_PATH_PREFIX.',
+      'With subdomain slots the port takes a slot (the least recently used one moves) and the URL carries a one-time sign-in ticket valid for 60 seconds; --bare prints the URL without it.'
+    ],
+    examples: [
+      'orca ports public-url --port 5173',
+      'orca ports public-url --port 8000 --path /docs'
+    ]
   }
 ]

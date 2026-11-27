@@ -22,14 +22,27 @@ export function loopbackUrlPortAndPath(rawUrl: string): { port: number; path: st
 export async function resolveRuntimePortPublicUrl(
   environmentId: string,
   port: number,
-  path?: string
+  path?: string,
+  ticket = true
 ): Promise<WorkspacePortPublicUrl> {
   return callRuntimeRpc<WorkspacePortPublicUrl>(
     { kind: 'environment', environmentId },
     'workspacePorts.publicUrl',
-    path && path !== '/' ? { port, path } : { port },
+    { port, ...(path && path !== '/' ? { path } : {}), ...(ticket ? {} : { ticket: false }) },
     { timeoutMs: 15_000 }
   )
+}
+
+function noticeEvictedPort(resolved: WorkspacePortPublicUrl): void {
+  if (resolved.evictedPort !== undefined) {
+    toast.info(
+      translate(
+        'auto.lib.workspace.ports.publicUrl.evicted',
+        'Port {{port}} gave up its public URL to make room',
+        { port: resolved.evictedPort }
+      )
+    )
+  }
 }
 
 function noticePublicUrlFailed(port: number): void {
@@ -57,6 +70,7 @@ export async function openRuntimePortPublicUrl(
     return
   }
   await openSystemHttpLink(resolved.url)
+  noticeEvictedPort(resolved)
   if (resolved.mode === 'che-path') {
     toast.info(
       translate('auto.lib.workspace.ports.publicUrl.opened', 'Opened port {{port}} via Che route', {
@@ -86,7 +100,10 @@ export async function openRuntimeLoopbackPublicUrl(
 
 export async function copyRuntimePortPublicUrl(environmentId: string, port: number): Promise<void> {
   try {
-    const { url } = await resolveRuntimePortPublicUrl(environmentId, port)
+    // A copied link outlives a one-time ticket; whoever opens it signs in from Orca.
+    const resolved = await resolveRuntimePortPublicUrl(environmentId, port, undefined, false)
+    noticeEvictedPort(resolved)
+    const { url } = resolved
     await window.api.ui.writeClipboardText(url)
     toast.success(translate('auto.lib.workspace.ports.publicUrl.copied', 'Public URL copied'))
   } catch {

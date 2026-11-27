@@ -6,7 +6,8 @@ import { WORKSPACE_SELECTOR_FOLDER_MATCH_RUNTIME_CAPABILITY } from '../../shared
 import type { WorkspacePortHostScanResult } from '../../shared/workspace/ports/workspace-ports'
 import { parseWorkspaceKey } from '../../shared/workspace/identity/workspace-scope'
 import type { CommandHandler, HandlerContext } from '../dispatch/dispatch'
-import { getOptionalStringFlag } from '../arguments/flags'
+import { getOptionalStringFlag, getRequiredPositiveNumber } from '../arguments/flags'
+import type { WorkspacePortPublicUrl } from '../../shared/workspace/ports/workspace-port-public-url'
 import { printResult } from '../output/command-result-output'
 import { formatPortsScan } from './ports-format'
 import { RuntimeClientError, RuntimeRpcFailureError } from '../runtime/connection/types'
@@ -164,6 +165,16 @@ function selectWorkspacePorts(
 }
 
 export const PORTS_HANDLERS: Record<string, CommandHandler> = {
+  'ports public-url': async ({ flags, client, json }) => {
+    const port = getRequiredPositiveNumber(flags, 'port')
+    const path = getOptionalStringFlag(flags, 'path')
+    const response = await client.call<WorkspacePortPublicUrl>('workspacePorts.publicUrl', {
+      port,
+      ...(path ? { path } : {}),
+      ...(flags.get('bare') === true ? { ticket: false } : {})
+    })
+    printResult(response, json, (result) => result.url)
+  },
   ports: async ({ flags, client, cwd, json }) => {
     const all = flags.get('all') === true
     const target = await resolvePortsTarget({ flags, cwd, client }, { needsWorktreePath: !all })

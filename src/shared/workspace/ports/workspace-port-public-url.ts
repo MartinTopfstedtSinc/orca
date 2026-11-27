@@ -7,6 +7,8 @@ export type WorkspacePortPublicUrlMode = 'che-path' | 'che-slot'
 export type WorkspacePortPublicUrl = {
   url: string
   mode: WorkspacePortPublicUrlMode
+  /** Slot mode: the port that lost its slot to this one. */
+  evictedPort?: number
 }
 
 export type ChePortExposureSettings = {

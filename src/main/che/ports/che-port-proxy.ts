@@ -12,8 +12,6 @@ import { resolveChePortTarget, type ChePortTarget } from './che-port-proxy-targe
 export type ChePortProxyRoute = Omit<ChePortForwardContext, 'upstreamHost'> & {
   /** Upstream path and query, starting with `/`. */
   path: string
-  /** Path mode shares Che's origin with the dashboard and every workspace. */
-  sharedOrigin: boolean
 }
 
 // The policy env is empty on purpose: an opt-out for paired browser tunnels never opens Orca's listeners here.
@@ -82,7 +80,7 @@ export async function proxyChePortRequest(
       response.writeHead(
         upstreamResponse.statusCode ?? 502,
         upstreamResponse.statusMessage,
-        cheBrowserResponseHeaders(upstreamResponse.headers, route, route.sharedOrigin)
+        cheBrowserResponseHeaders(upstreamResponse.headers, route)
       )
       upstreamResponse.pipe(response)
       upstreamResponse.on('error', () => response.destroy())
