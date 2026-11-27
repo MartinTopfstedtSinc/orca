@@ -7,6 +7,9 @@ import {
 } from '../../../../../shared/workspace/ports/workspace-port-public-url'
 import { WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY } from '../../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
 import { useRuntimeEnvironmentCapability } from '@/runtime/rpc/compatibility/use-runtime-environment-capability'
+import { useAppStore } from '@/store/index'
+import { getPairedWebClientEnvironmentId } from '@/app-shell/platform/paired-web-client-host'
+import type { RuntimeClientTarget } from '../../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import { useTranslate, type Translate } from '@/i18n/use-translate'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
 import { SettingsRow } from '../form-controls/SettingsFormControls'
@@ -42,13 +45,19 @@ export function ChePortExposureSetting({
 }): React.JSX.Element | null {
   const t = useTranslate()
   const labelId = useId()
-  const hostLabel = useSettingsHostLabel(hostScope.target)
+  // A web client's own settings live in the browser; the port route belongs to the server serving it.
+  const webClientEnvironmentId = useAppStore(getPairedWebClientEnvironmentId)
+  const owner: RuntimeClientTarget =
+    hostScope.target.kind === 'local' && webClientEnvironmentId
+      ? { kind: 'environment', environmentId: webClientEnvironmentId }
+      : hostScope.target
+  const hostLabel = useSettingsHostLabel(owner)
   const isChe = useRuntimeEnvironmentCapability(
-    hostScope.target.kind === 'environment' ? hostScope.target.environmentId : null,
+    owner.kind === 'environment' ? owner.environmentId : null,
     WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY
   )
   const { setting, update } = useHostSetting({
-    owner: hostScope.target,
+    owner,
     settingKey: 'chePortExposure',
     localSettings: settings,
     updateLocalSettings: updateSettings,
