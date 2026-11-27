@@ -1,38 +1,45 @@
 import { readdir, readFile, readlink } from 'node:fs/promises'
 import { parseProcNetTcp } from '../../ports/linux-proc-net-listeners'
 
+/** Strips its prefix: for apps that use relative URLs. */
 export const CHE_PORT_PATH_PREFIX = '/__orca/port/'
+/** Keeps the full public path: for apps configured with it as their base path. */
+export const CHE_PORT_ABSOLUTE_PATH_PREFIX = '/__orca/absport/'
 
 export type ChePortPathRequest =
-  | { kind: 'proxy'; port: number; path: string }
-  | { kind: 'redirect'; port: number }
+  | { kind: 'proxy'; port: number; path: string; absolute: boolean }
+  | { kind: 'redirect'; port: number; absolute: boolean }
   | { kind: 'invalid' }
 
-/** Parses `/__orca/port/<n>/<rest>`; null when the URL is not a port route at all. */
+/** Parses `/__orca/port/<n>/<rest>` and `/__orca/absport/<n>/<rest>`; null for any other URL. */
 export function parseChePortPath(rawUrl: string | undefined): ChePortPathRequest | null {
-  if (!rawUrl?.startsWith(CHE_PORT_PATH_PREFIX.slice(0, -1))) {
+  const routePrefix = [CHE_PORT_PATH_PREFIX, CHE_PORT_ABSOLUTE_PATH_PREFIX].find((prefix) =>
+    rawUrl?.startsWith(prefix.slice(0, -1))
+  )
+  if (!rawUrl || !routePrefix) {
     return null
   }
+  const absolute = routePrefix === CHE_PORT_ABSOLUTE_PATH_PREFIX
   const queryAt = rawUrl.search(/[?#]/)
   const pathname = queryAt === -1 ? rawUrl : rawUrl.slice(0, queryAt)
   const query = queryAt === -1 ? '' : rawUrl.slice(queryAt).replace(/#.*$/, '')
-  if (pathname === CHE_PORT_PATH_PREFIX.slice(0, -1)) {
+  if (pathname === routePrefix.slice(0, -1)) {
     return { kind: 'invalid' }
   }
-  if (!pathname.startsWith(CHE_PORT_PATH_PREFIX)) {
+  if (!pathname.startsWith(routePrefix)) {
     return null
   }
-  const rest = pathname.slice(CHE_PORT_PATH_PREFIX.length)
+  const rest = pathname.slice(routePrefix.length)
   const match = /^([1-9]\d{0,4})(\/.*)?$/.exec(rest)
   const port = match ? Number(match[1]) : 0
   if (!match || port > 65535) {
     return { kind: 'invalid' }
   }
   if (match[2] === undefined) {
-    return { kind: 'redirect', port }
+    return { kind: 'redirect', port, absolute }
   }
   return isTraversalFree(match[2])
-    ? { kind: 'proxy', port, path: match[2] + query }
+    ? { kind: 'proxy', port, path: match[2] + query, absolute }
     : { kind: 'invalid' }
 }
 

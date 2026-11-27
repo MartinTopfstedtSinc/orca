@@ -19,6 +19,14 @@ describe('rewriteChePortLocation', () => {
     expect(rewriteChePortLocation('/dashboard', target)).toBe(`${PREFIX}/dashboard`)
   })
 
+  it('leaves redirects to an already public path (an app with a base path) unprefixed', () => {
+    const based = { ...target, publicRoot: '/user/ws/6768/' }
+    const base = '/user/ws/6768/__orca/absport/5173/'
+    expect(rewriteChePortLocation(base, based)).toBe(base)
+    expect(rewriteChePortLocation(`http://localhost:5173${base}x`, based)).toBe(`${ORIGIN}${base}x`)
+    expect(rewriteChePortLocation('/login', based)).toBe(`${PREFIX}/login`)
+  })
+
   it('leaves relative, other-port, other-host and protocol-relative redirects alone', () => {
     for (const location of [
       'next',
@@ -40,6 +48,12 @@ describe('rewriteChePortSetCookie', () => {
     expect(rewriteChePortSetCookie('a=b; Path=/api', PREFIX)).toBe(`a=b; Path=${PREFIX}/api`)
     expect(rewriteChePortSetCookie('a=b', PREFIX)).toBe(`a=b; Path=${PREFIX}/`)
     expect(rewriteChePortSetCookie('a=b; Domain=.example.com', '')).toBe('a=b')
+    // A base-path app's own path stays; its Path=/ never reaches the whole shared Che origin.
+    const root = '/user/ws/6768/'
+    expect(rewriteChePortSetCookie(`a=b; Path=${PREFIX}/x`, PREFIX, root)).toBe(
+      `a=b; Path=${PREFIX}/x`
+    )
+    expect(rewriteChePortSetCookie('a=b; Path=/', PREFIX, root)).toBe(`a=b; Path=${PREFIX}/`)
   })
 })
 

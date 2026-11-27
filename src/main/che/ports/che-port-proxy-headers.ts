@@ -33,13 +33,17 @@ export type ChePortPublicLocation = {
   publicOrigin: string
   /** Path the browser sees in front of the app's own paths; empty for an app at `/`. */
   publicPrefix: string
+  /** Paths under this are already public (an app configured with its base path); never prefixed. */
+  publicRoot?: string
   port: number
 }
 
 /** Maps a redirect the app aimed at its own localhost URL, or its own root, onto the public URL. */
 export function rewriteChePortLocation(location: string, target: ChePortPublicLocation): string {
+  const alreadyPublic = (path: string): boolean =>
+    target.publicRoot !== undefined && path.startsWith(target.publicRoot)
   if (location.startsWith('/') && !location.startsWith('//')) {
-    return target.publicPrefix + location
+    return alreadyPublic(location) ? location : target.publicPrefix + location
   }
   let url: URL
   try {
@@ -55,11 +59,16 @@ export function rewriteChePortLocation(location: string, target: ChePortPublicLo
   ) {
     return location
   }
-  return `${target.publicOrigin}${target.publicPrefix}${url.pathname}${url.search}${url.hash}`
+  const prefix = alreadyPublic(url.pathname) ? '' : target.publicPrefix
+  return `${target.publicOrigin}${prefix}${url.pathname}${url.search}${url.hash}`
 }
 
 /** Scopes an app's cookie to its public prefix; `Domain` would leak it to sibling hosts. */
-export function rewriteChePortSetCookie(cookie: string, publicPrefix: string): string {
+export function rewriteChePortSetCookie(
+  cookie: string,
+  publicPrefix: string,
+  publicRoot?: string
+): string {
   const [pair = '', ...attributes] = cookie.split(';')
   let hasPath = false
   const kept: string[] = []
@@ -71,7 +80,10 @@ export function rewriteChePortSetCookie(cookie: string, publicPrefix: string): s
     if (name === 'path') {
       hasPath = true
       const value = attribute.slice(attribute.indexOf('=') + 1).trim()
-      kept.push(` Path=${publicPrefix}${value.startsWith('/') ? value : `/${value}`}`)
+      const path = value.startsWith('/') ? value : `/${value}`
+      kept.push(
+        ` Path=${publicRoot !== undefined && path.startsWith(publicRoot) ? '' : publicPrefix}${path}`
+      )
       continue
     }
     kept.push(attribute)
@@ -172,7 +184,9 @@ export function cheBrowserResponseHeaders(
       const cookies = Array.isArray(value) ? value : [String(value)]
       out['set-cookie'] = cookies
         .filter((cookie) => !isCheSessionCookie(cookie.split('=')[0]?.trim() ?? ''))
-        .map((cookie) => rewriteChePortSetCookie(cookie, location.publicPrefix))
+        .map((cookie) =>
+          rewriteChePortSetCookie(cookie, location.publicPrefix, location.publicRoot)
+        )
       continue
     }
     out[name] = value

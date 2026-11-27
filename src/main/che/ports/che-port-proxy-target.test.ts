@@ -8,9 +8,21 @@ describe('parseChePortPath', () => {
     expect(parseChePortPath('/__orca/port/5173/src/main.ts?t=1')).toEqual({
       kind: 'proxy',
       port: 5173,
-      path: '/src/main.ts?t=1'
+      path: '/src/main.ts?t=1',
+      absolute: false
     })
-    expect(parseChePortPath('/__orca/port/5173')).toEqual({ kind: 'redirect', port: 5173 })
+    expect(parseChePortPath('/__orca/port/5173')).toEqual({
+      kind: 'redirect',
+      port: 5173,
+      absolute: false
+    })
+    expect(parseChePortPath('/__orca/absport/5174/src/main.ts')).toEqual({
+      kind: 'proxy',
+      port: 5174,
+      path: '/src/main.ts',
+      absolute: true
+    })
+    expect(parseChePortPath('/__orca/absportal')).toBeNull()
   })
 
   it('refuses ports out of range and dot segments, encoded or not', () => {
@@ -26,7 +38,9 @@ describe('parseChePortPath', () => {
       '/__orca/port/5173/%2e%2e/6768',
       '/__orca/port/5173/a/%2E/b',
       '/__orca/port/5173/..%5c6768',
-      '/__orca/port/5173/%zz'
+      '/__orca/port/5173/%zz',
+      '/__orca/absport/',
+      '/__orca/absport/5174/../../6768'
     ]) {
       expect(parseChePortPath(url), url).toEqual({ kind: 'invalid' })
     }
