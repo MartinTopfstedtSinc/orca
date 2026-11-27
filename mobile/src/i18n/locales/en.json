@@ -4848,6 +4848,7 @@
       "noLinearTasks": "No Linear tasks",
       "noJiraTasks": "No Jira tasks",
       "noAzureDevOpsTasks": "No Azure DevOps tasks",
+      "noBacklogMdTasks": "No Backlog.md tasks",
       "assignedSubtitle": "Unresolved issues assigned to you",
       "reportedSubtitle": "Unresolved issues you reported",
       "allSubtitle": "Unresolved issues across the selected sites",

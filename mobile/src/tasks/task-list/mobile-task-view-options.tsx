@@ -9,7 +9,8 @@ export const PROVIDER_LABELS: Record<TaskProvider, string> = {
   gitlab: 'GitLab',
   linear: 'Linear',
   jira: 'Jira',
-  'azure-devops': 'Azure DevOps'
+  'azure-devops': 'Azure DevOps',
+  'backlog-md': 'Backlog.md'
 }
 
 export const PROVIDER_EMPTY_LABELS: Record<TaskProvider, string> = {
@@ -27,6 +28,9 @@ export const PROVIDER_EMPTY_LABELS: Record<TaskProvider, string> = {
   },
   get 'azure-devops'() {
     return translate('tasks.taskViewOptions.noAzureDevOpsTasks', 'No Azure DevOps tasks')
+  },
+  get 'backlog-md'() {
+    return translate('tasks.taskViewOptions.noBacklogMdTasks', 'No Backlog.md tasks')
   }
 }
 

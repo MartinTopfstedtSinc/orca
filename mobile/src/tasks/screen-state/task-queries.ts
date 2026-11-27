@@ -232,5 +232,8 @@ export function taskListParams(input: TaskListInput, repoKey: string): HostQuery
     // Why: the desktop reads Azure DevOps Boards over its own IPC; mobile has no host query for it yet.
     case 'azure-devops':
       return null
+    // Backlog.md is a desktop-only source; mobile never offers it.
+    case 'backlog-md':
+      return null
   }
 }
