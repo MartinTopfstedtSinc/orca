@@ -14,10 +14,12 @@ import { StructuredAgentSessionStatusBridge } from '../components/native-chat/se
 import { NativeChatVisualGuestThemePublisher } from '../components/native-chat/media/visuals/NativeChatVisualGuestThemePublisher'
 import { usePairedMobileDevices } from '../components/mobile/paired-mobile-devices'
 import { useBotSlackIcons } from '../components/bots/use-bot-slack-icons'
+import { isWebClientLocation } from './platform/web-client-location'
 
 const DashboardPopoutBridge = lazy(
   () => import('../components/dashboard/popout-bridge/DashboardPopoutBridge')
 )
+const WebTabAttention = lazy(() => import('./web-tab-attention/WebTabAttention'))
 const AgentListVerdictPublisher = lazy(
   () => import('../components/activity/paired-clients/agent-list-verdict-publisher')
 )
@@ -59,6 +61,12 @@ export function AppBackgroundServices(): React.JSX.Element {
         </Suspense>
       ) : null}
       <StructuredAgentSessionStatusBridge />
+      {/* Desktop windows signal through the tray and notifications; a browser tab only has its title and favicon. */}
+      {isWebClientLocation() ? (
+        <Suspense fallback={null}>
+          <WebTabAttention />
+        </Suspense>
+      ) : null}
       {/* Background chats have no mounted pane but still need completion attention. */}
       <StructuredAgentSessionAttentionBridge />
     </>

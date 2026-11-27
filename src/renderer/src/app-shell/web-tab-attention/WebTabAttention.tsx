@@ -1,0 +1,22 @@
+import { useEffect, useState } from 'react'
+import { useWebTabAttentionCount } from './use-web-tab-attention-count'
+import { applyWebTabFavicon, webTabAttentionTitle } from './web-tab-favicon'
+
+/** The browser tab's title and favicon count what waits on the owner, so a background tab still says so. */
+export default function WebTabAttention(): null {
+  const count = useWebTabAttentionCount()
+  const [baseTitle] = useState(() => document.title)
+
+  useEffect(() => {
+    let current = true
+    document.title = webTabAttentionTitle(baseTitle, count)
+    void applyWebTabFavicon(count, () => current)
+    return () => {
+      current = false
+    }
+  }, [baseTitle, count])
+
+  useEffect(() => () => void (document.title = baseTitle), [baseTitle])
+
+  return null
+}
