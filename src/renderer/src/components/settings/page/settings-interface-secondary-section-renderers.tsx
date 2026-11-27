@@ -4,6 +4,7 @@ import { ChatSettingsSection } from '../chat/ChatSettingsSection'
 import { InputPane } from '../input/InputPane'
 import { NotificationsPane } from '../notifications/NotificationsPane'
 import { ServerNotificationsPane } from '../notifications/ServerNotificationsPane'
+import { WebNotificationsPane } from '../notifications/WebNotificationsPane'
 import { ShortcutsPane } from '../shortcuts/ShortcutsPane'
 import { SettingsSection } from '../section-layout/SettingsSection'
 import { translate } from '@/i18n/i18n'
@@ -110,7 +111,23 @@ export function renderNotificationsSettingsSection(
 ): React.JSX.Element | null {
   const { model, navigation, view } = context
   const serverName = getSettingsHostServerName(model, t)
-  return model.showDesktopOnlySettings ? (
+  if (!model.showDesktopOnlySettings) {
+    // The web client notifies through this browser, which keeps its own opt-in.
+    return (
+      <SettingsSection
+        id="notifications"
+        title={t('auto.components.settings.Settings.9907545fa3', 'Notifications')}
+        description={t(
+          'web.settings.notifications.sectionDescription',
+          'Notifications from this browser while Orca is in a background tab.'
+        )}
+        searchEntries={navigation.getSectionSearchEntries('notifications')}
+      >
+        {view.isSectionMounted('notifications') ? <WebNotificationsPane /> : null}
+      </SettingsSection>
+    )
+  }
+  return (
     <SettingsSection
       id="notifications"
       title={t('auto.components.settings.Settings.9907545fa3', 'Notifications')}
@@ -136,7 +153,7 @@ export function renderNotificationsSettingsSection(
         <NotificationsPane settings={model.settings} updateSettings={model.updateSettings} />
       )}
     </SettingsSection>
-  ) : null
+  )
 }
 
 export function renderShortcutsSettingsSection(

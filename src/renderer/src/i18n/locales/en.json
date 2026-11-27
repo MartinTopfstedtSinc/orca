@@ -31535,5 +31535,29 @@
       "badJson": "Check the pasted JSON: it doesn’t parse.",
       "none": "Orca found no server it can add. SSE servers, servers with their own OAuth client or tool filters, and values read from the environment (${VAR}) aren’t supported."
     }
+  },
+  "web": {
+    "notifications": {
+      "botItem": "Something needs you",
+      "botItems": "{{total}} things need you",
+      "botReply": "New reply",
+      "testBody": "Browser notifications are on.",
+      "agentPermission": "{{agent}} asks for permission",
+      "agentInput": "{{agent}} needs your input"
+    },
+    "settings": {
+      "notifications": {
+        "navDescription": "Browser notifications while Orca is in a background tab.",
+        "blocked": "This browser blocks notifications from this site. Allow them in the site settings, then turn this on.",
+        "unsupported": "This browser cannot show notifications.",
+        "label": "Browser notifications",
+        "description": "While this tab is in the background, notify when an agent or bot starts needing you.",
+        "test": "Send test notification",
+        "search": {
+          "browser": "browser"
+        },
+        "sectionDescription": "Notifications from this browser while Orca is in a background tab."
+      }
+    }
   }
 }

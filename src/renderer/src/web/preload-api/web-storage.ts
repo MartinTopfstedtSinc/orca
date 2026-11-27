@@ -10,6 +10,8 @@ export const GITHUB_CACHE_STORAGE_KEY = 'orca.web.githubCache.v1'
 
 export const KEYBINDINGS_STORAGE_KEY = 'orca.web.keybindings.v1'
 
+export const BROWSER_NOTIFICATIONS_STORAGE_KEY = 'orca.web.browserNotifications.v1'
+
 export function getBrowserPlatform(): NodeJS.Platform {
   if (navigator.userAgent.includes('Windows')) {
     return 'win32'
