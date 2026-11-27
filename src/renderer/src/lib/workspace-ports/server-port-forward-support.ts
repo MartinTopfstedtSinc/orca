@@ -43,6 +43,16 @@ export function sshForwardsPorts(targetId: string): boolean {
   )
 }
 
+/** The desktop's bridge for forwarding a server port to this machine. The web client's fallback
+ *  `window.api` answers every name, but a browser tab cannot listen on a local port. */
+export function desktopPortForwardsApi():
+  | typeof window.api.runtimeEnvironments.portForwards
+  | undefined {
+  return typeof window === 'undefined' || isWebClientLocation()
+    ? undefined
+    : window.api?.runtimeEnvironments?.portForwards
+}
+
 /** Whether this desktop can forward the paired server's localhost ports: over SSH for a server
  *  deployed that way, else over its own connection, from its last probed status. */
 export function serverForwardsPorts(environmentId: string): boolean {
@@ -51,8 +61,7 @@ export function serverForwardsPorts(environmentId: string): boolean {
     return sshForwardsPorts(sshTargetId)
   }
   return (
-    typeof window !== 'undefined' &&
-    window.api?.runtimeEnvironments?.portForwards !== undefined &&
+    desktopPortForwardsApi() !== undefined &&
     readCachedRuntimeEnvironmentCapability(
       environmentId,
       NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY

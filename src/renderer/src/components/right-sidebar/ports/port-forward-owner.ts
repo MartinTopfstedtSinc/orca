@@ -1,4 +1,5 @@
 import type { PortForwardEntry } from '../../../../../shared/remote-runtime/ssh/ssh-types'
+import { desktopPortForwardsApi } from '@/lib/workspace-ports/server-port-forward-support'
 
 /** The connection that carries a forward: an SSH session, or a paired server's own connection. */
 export type PortForwardOwner =
@@ -43,7 +44,7 @@ export async function removePortForward(owner: PortForwardOwner, id: string): Pr
 }
 
 function requireRuntimePortForwards() {
-  const api = window.api.runtimeEnvironments.portForwards
+  const api = desktopPortForwardsApi()
   if (!api) {
     throw new Error('Port forwarding is unavailable in this client.')
   }

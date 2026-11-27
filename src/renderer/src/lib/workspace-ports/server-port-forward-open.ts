@@ -17,6 +17,7 @@ import { openForwardedUrlInSystemBrowser } from './forwarded-url-system-browser-
 import { openSystemHttpLink } from '@/lib/browser/navigation/http-link-routing'
 import { openRuntimeLoopbackPublicUrl } from './runtime-port-public-url'
 import {
+  desktopPortForwardsApi,
   serverForwardsPorts,
   serverPublishesPorts,
   serverSshForwardTargetId,
@@ -88,7 +89,7 @@ export async function openServerLoopbackInSystemBrowser(
     await openForwardedUrlInSystemBrowser(known.url, known.forward, 'paired')
     return
   }
-  const api = window.api.runtimeEnvironments.portForwards
+  const api = desktopPortForwardsApi()
   const supported =
     api !== undefined &&
     (await runtimeEnvironmentSupportsCapability(
