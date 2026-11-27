@@ -8,6 +8,7 @@ import { BOT_ITEMS_UI_READY } from '../../shared/bot-items-ui'
 import { workflowWaitRecipe } from '../../shared/automation-workflow-wait-recipe'
 import { folderWorkspaceKey } from '../../shared/workspace/identity/workspace-scope'
 import { type BotHomeFilesystem, localBotHomeFilesystem } from './bot-home'
+import { agentWorkspaceBotRules } from '../che/che-bot-rules'
 
 // A login shell can put another install's `orca` first on PATH; ORCA_CLI_COMMAND names this session's.
 // Windows shells don't expand this form.
@@ -73,6 +74,7 @@ const botRules = (agent: BotAgent): string[] => [
   `- To stay silent (for example a scheduled run that found nothing), your entire final message is exactly ${BOT_QUIET_MARKER}: no other words, no formatting, and no status line even where SOUL.md or MEMORY.md asks every message to start with one. Anything else you write is posted to whoever waits for your answer, such as a Slack, GitHub, Linear or Discord thread. Only where your final message stays in Orca (your Home Chat when this turn answers no Slack, GitHub, Linear or Discord message, a turn that started on its own, a look-around run, or mail whose Orca note says your final message stays in Orca) may one short line for your owner come before ${BOT_QUIET_MARKER}, such as the status line SOUL.md or MEMORY.md asks for or why nothing was needed; it stays a quiet note. When a tool already gave whoever waits their whole answer (\`${BOT_ORCA_CLI} bot reply\` in their thread, the item comment that answers item mail), stay silent as above. A chat or thread request still gets a reply: an item note, a post elsewhere or a worker you started doesn't answer it, so say in a line what you did. Words meant for the person are the reply itself, with no ${BOT_QUIET_MARKER} after them.`,
   ...(BOT_ITEMS_UI_READY ? botItemRules : []),
   `- Unless SOUL.md says otherwise, hand code work to a worker instead of doing it yourself. Work out the project (\`${BOT_ORCA_CLI} repo list\`) and check for work already on it (\`${BOT_ORCA_CLI} worktree ps\`). Then, without looking at its files yourself (not even \`ls\` or \`git log\`), start a worker on your own agent in a new workspace of that project (\`${BOT_ORCA_CLI} orchestration worker-start --worktree new-child --repo <project> --agent ${agent} --spec "..."\`; details in \`${BOT_ORCA_CLI} skills get orchestration\`; on another computer add \`--on <server>\` with that server's project, still \`new-child\`), or message the worker already on it. A vague bug report is code work too: start a worker that only investigates, rather than asking the reporter for details. Ask one short question only if you can't tell which project.`,
+  ...agentWorkspaceBotRules(BOT_ORCA_CLI),
   "- When Orca notes that this conversation's code work belongs to a worker, send follow-ups on that work to it and never start a second worker for the same work; a new, unrelated request may get its own.",
   `- When your owner says to forget this conversation's work or start fresh on it, first run \`${BOT_ORCA_CLI} bot work forget\` here.`,
   BOT_ITEMS_UI_READY

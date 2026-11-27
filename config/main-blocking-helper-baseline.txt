@@ -167,8 +167,10 @@
 1 src/main/browser/site-settings/browser-profile-site-store.ts
 1 src/main/browser/site-settings/display/browser-site-display-store.ts
 1 src/main/browser/site-settings/permissions/browser-site-permission-store.ts
+4 src/main/che/che-worker-start.ts # Che agent workspaces keep their records in upstream's synchronous ephemeral-VM store, a JSON file under 1 MB, as src/main/ephemeral-vm does
+4 src/main/che/che-workspace-provision.ts # Che agent workspaces keep their records in upstream's synchronous ephemeral-VM store, a JSON file under 1 MB, as src/main/ephemeral-vm does
 7 src/main/che/che-workspace-records.ts # Che agent workspaces keep their records in upstream's synchronous ephemeral-VM store, a JSON file under 1 MB, as src/main/ephemeral-vm does
-16 src/main/che/che-workspaces.ts # Che agent workspaces keep their records in upstream's synchronous ephemeral-VM store, a JSON file under 1 MB, as src/main/ephemeral-vm does
+13 src/main/che/che-workspaces.ts # Che agent workspaces keep their records in upstream's synchronous ephemeral-VM store, a JSON file under 1 MB, as src/main/ephemeral-vm does
 1 src/main/claude-accounts/profiles/claude-profile-homes.ts
 11 src/main/claude-accounts/profiles/claude-profile-paths.ts
 3 src/main/claude-accounts/profiles/routing/claude-observed-config-dirs.ts

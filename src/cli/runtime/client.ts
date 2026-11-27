@@ -45,6 +45,7 @@ import {
   resolveWorkerStartReadinessTimeoutMs
 } from '../../shared/orchestration/orchestration-timing-budgets'
 import { MAX_TIMER_DELAY_MS } from '../../shared/concurrency/timer-delay'
+import { agentWorkspaceStartBudgetMs } from '../../shared/che/agent-workspace-target'
 import {
   buildOrchestrationRecoveryCommand,
   resolveOrchestrationCliExecutable
@@ -205,7 +206,9 @@ export class RuntimeClient {
           `--timeout-ms is too large for worker-start transport grace; the derived timeout must be <= ${MAX_TIMER_DELAY_MS}ms.`
         )
       }
-      const readiness = resolveWorkerStartReadinessTimeoutMs(requested)
+      // A start that first creates its agent workspace waits for that too.
+      const readiness =
+        resolveWorkerStartReadinessTimeoutMs(requested) + agentWorkspaceStartBudgetMs(params)
       return Math.max(resolveWorkerStartClientTimeoutMs(readiness), this.requestTimeoutMs)
     }
     // A send to a finished worker starts its follow-up, which waits as worker-start does.
