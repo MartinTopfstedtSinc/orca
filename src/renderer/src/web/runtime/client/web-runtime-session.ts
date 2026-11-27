@@ -8,6 +8,7 @@ import { RuntimeRpcCallQueuePool } from '../../../../../shared/remote-runtime/rp
 import type { RuntimeRpcResponse } from '../../../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
 import type { Worktree } from '../../../../../shared/worktree/types'
 import { WebRuntimeClient } from './web-runtime-client'
+import { SharedSocketWebRuntimeClient } from './web-runtime-shared-socket-client'
 import {
   clearStoredWebRuntimeEnvironment,
   getPreferredWebRuntimeConnection,
@@ -104,7 +105,7 @@ export function getClientForEnvironment(
     webRuntimeState.activeClientEnvironmentId !== environment.id
   ) {
     webRuntimeState.activeClient?.close()
-    webRuntimeState.activeClient = new WebRuntimeClient(
+    webRuntimeState.activeClient = new SharedSocketWebRuntimeClient(
       getPreferredWebRuntimeConnection(environment),
       {
         credential: credentialFor(environment),

@@ -105,6 +105,7 @@ describe('enrollWebRuntimeSubscription on a shared socket', () => {
       method: 'agentSession.subscribe',
       params: { sessionId: 'a' },
       callbacks: { onResponse: () => {} },
+      options: { cancelOnUnsubscribe },
       waitForConnected: async () => {},
       nextId: () => `req_${++next}`,
       subscriptions,
@@ -113,8 +114,7 @@ describe('enrollWebRuntimeSubscription on a shared socket', () => {
         return true
       },
       sendBinary: () => true,
-      deviceToken: 'device',
-      cancelOnUnsubscribe
+      deviceToken: 'device'
     })
     return { sent, subscriptions, handle }
   }
