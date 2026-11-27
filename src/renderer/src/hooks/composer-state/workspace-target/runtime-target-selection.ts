@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- Why: upstream keeps this hook at the limit; the fork adds one import for agent workspaces. */
 import { ipcOrRuntimeTargetForHostId } from '@/runtime/rpc/targets/runtime-client-target'
 import { useEffect, useMemo, useRef } from 'react'
 import '@/components/sidebar/workspace-creation/folder/folder-workspace-source-repos'
@@ -21,12 +20,11 @@ import { repoIsRemote } from '../../../../../shared/agent-launch/startup/agent-l
 import { buildProjectHostSetupOptions } from '@/lib/workspace/creation/project-host-setup-options'
 import { buildNewWorkspaceCreateTargetOptions } from '@/lib/workspace/creation/new-workspace-project-options'
 import { getRuntimeEnvironmentIdForRepo } from '@/lib/workspace/ownership/repo-runtime-owner'
-import { useEphemeralVmRecipeOptions } from '@/hooks/composer-state/workspace-target/useEphemeralVmRecipeOptions'
+import { ephemeralVmsEnabledFor, useEphemeralVmRecipeOptions } from './useEphemeralVmRecipeOptions'
 import { selectProjectFirstReason } from './runtime-target-selection-copy'
 import type { ComposerRuntimeTargetSelectionInput } from '../composer-target-input-contracts'
 import type { TuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent'
 import type { ExecutionHostPlatformFact } from '@/runtime/hosts/platform/execution-host-platform-fact'
-import { ephemeralVmsEnabledFor } from './ephemeral-vms-enabled'
 import { pickerRepos } from '../../../../../shared/project/catalog/hidden-projects'
 
 export function useComposerRuntimeTargetSelection(input: ComposerRuntimeTargetSelectionInput) {

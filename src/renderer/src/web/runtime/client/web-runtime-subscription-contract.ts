@@ -30,6 +30,8 @@ export type WebRuntimeSubscribeOptions = {
   timeoutMs?: number
   assertCurrent?: () => void
   buildUnsubscribe?: (params: unknown) => { method: string; params: unknown } | null
+  // Set for a subscription on a shared socket, which unsubscribing leaves open.
+  cancelOnUnsubscribe?: boolean
 }
 
 export type WebRuntimeTransportSubscriptionHandle = {

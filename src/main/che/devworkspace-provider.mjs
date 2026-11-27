@@ -1,5 +1,5 @@
 import https from 'node:https'
-import { readFileSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import { setTimeout as delay } from 'node:timers/promises'
 
@@ -41,17 +41,19 @@ export class KubernetesClient {
     this.origin = `https://${host?.includes(':') ? `[${host}]` : host}:${env.KUBERNETES_SERVICE_PORT_HTTPS || '443'}`
   }
 
-  credentials() {
-    return {
-      ca: readFileSync(`${SA}/ca.crt`),
-      headers: { Authorization: `Bearer ${readFileSync(`${SA}/token`, 'utf8').trim()}` }
-    }
+  // Read per request: Kubernetes rotates the projected token while the pod runs.
+  async credentials() {
+    const [ca, token] = await Promise.all([
+      readFile(`${SA}/ca.crt`),
+      readFile(`${SA}/token`, 'utf8')
+    ])
+    return { ca, headers: { Authorization: `Bearer ${token.trim()}` } }
   }
 
-  request(method, path, body, signal) {
+  async request(method, path, body, signal) {
+    const credentials = await this.credentials()
     return new Promise((resolve, reject) => {
       const data = body === undefined ? undefined : JSON.stringify(body)
-      const credentials = this.credentials()
       const request = https.request(
         new URL(path, this.origin),
         {
@@ -116,8 +118,9 @@ export class KubernetesClient {
     }
     const url = new URL(`/api/v1/namespaces/${namespace}/pods/${pod}/exec?${query}`, this.origin)
     url.protocol = 'wss:'
+    const credentials = await this.credentials()
     return new Promise((resolve, reject) => {
-      const socket = new WebSocket(url, ['v4.channel.k8s.io'], this.credentials())
+      const socket = new WebSocket(url, ['v4.channel.k8s.io'], credentials)
       let output = ''
       let succeeded = false
       let finished = false

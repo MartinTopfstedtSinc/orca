@@ -116,8 +116,7 @@ export async function enrollWebRuntimeSubscription({
   subscriptions,
   sendEncrypted,
   sendBinary,
-  deviceToken,
-  cancelOnUnsubscribe = false
+  deviceToken
 }: {
   method: string
   params: unknown
@@ -129,8 +128,6 @@ export async function enrollWebRuntimeSubscription({
   sendEncrypted: (message: unknown) => boolean
   sendBinary: (bytes: Uint8Array<ArrayBufferLike>) => boolean
   deviceToken: string
-  // A shared socket stays open, so the host must be told to end the stream.
-  cancelOnUnsubscribe?: boolean
 }): Promise<WebRuntimeTransportSubscriptionHandle> {
   // The outer wait keeps main's normalized abort reason; the inner signal frees the waiter early.
   await waitForPromiseWithSignal(
@@ -156,7 +153,8 @@ export async function enrollWebRuntimeSubscription({
   return {
     unsubscribe: () => {
       subscriptions.delete(subscription.id)
-      if (cancelOnUnsubscribe) {
+      // A shared socket stays open, so the host must be told to end the stream.
+      if (options?.cancelOnUnsubscribe) {
         sendEncrypted({
           id: nextId(),
           deviceToken: deviceToken,

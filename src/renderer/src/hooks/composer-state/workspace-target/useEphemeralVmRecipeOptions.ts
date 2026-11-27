@@ -1,3 +1,4 @@
+import { isPairedWebClientWindow } from '@/app-shell/chrome/desktop-window-chrome'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   LOCAL_EXECUTION_HOST_ID,
@@ -7,6 +8,13 @@ import type { OrcaVmRecipe } from '../../../../../shared/workspace-setup/orca-ya
 import type { EphemeralVmFailure } from '../../../../../shared/remote-runtime/ephemeral-vm-recipes/ephemeral-vm-failure-copy'
 import { ephemeralVmErrorText } from '@/runtime/ephemeral-vm/ephemeral-vm-error-copy'
 import { useUiLanguageRevision } from '@/i18n/use-ui-language-revision'
+
+// The web client's only recipe is the server-managed Che DevWorkspace, which needs no toggle.
+export function ephemeralVmsEnabledFor(
+  settings: { experimentalEphemeralVms?: boolean } | null | undefined
+): boolean {
+  return settings?.experimentalEphemeralVms === true || isPairedWebClientWindow()
+}
 
 type EphemeralVmRecipeOptionsArgs = {
   enabled: boolean
