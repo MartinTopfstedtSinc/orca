@@ -79,6 +79,8 @@ export type WorkspacePortScanResult = {
   scannedAt: number
   ports: WorkspacePort[]
   unavailableReason?: string
+  /** Che servers only: `<base><port>/` opens a port through the workspace's public path route. */
+  publicBaseUrl?: string
 }
 
 /** A scan of one execution host, named endpoint-relative (`local` or `ssh:<target>` as the host sees it). */

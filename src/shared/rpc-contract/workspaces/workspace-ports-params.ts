@@ -24,6 +24,18 @@ export const WorkspacePortProbePageParams = lazyZodSchema(() =>
   })
 )
 
+export const WorkspacePortPublicUrlParams = lazyZodSchema(() =>
+  z.object({
+    port: z.number().int().min(1).max(65535),
+    // Path and query on the app, as in `http://localhost:<port><path>`.
+    path: z
+      .string()
+      .max(8192)
+      .refine((path) => path.startsWith('/') && !path.startsWith('//'), 'Path must start with /')
+      .optional()
+  })
+)
+
 export const WorkspacePortScanHostParams = lazyZodSchema(() =>
   z.object({
     worktree: requiredString('Missing worktree selector')

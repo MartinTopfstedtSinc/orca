@@ -1,5 +1,5 @@
 import type { LookupAddress, LookupOptions } from 'node:dns'
-import { connect } from 'node:net'
+import { connect, type Socket } from 'node:net'
 import { browserNetworkExecutionHostKey } from '../../../../shared/browser/client-hosting/browser-network-execution-host'
 import type { BrowserNetworkTunnelOpen } from '../../../../shared/browser/network/tunnels/browser-network-tunnel-protocol'
 import type { BrowserNetworkTunnelSocket } from '../tunnels/browser-network-tunnel-stream-state'
@@ -107,7 +107,7 @@ function loopbackOnlyLookup(
 export function connectNativeLoopbackTarget(
   target: BrowserNetworkTunnelOpen,
   env: Record<string, string | undefined> = process.env
-): BrowserNetworkTunnelSocket {
+): Socket {
   const reason = isBrowserTunnelPolicyDisabled(env)
     ? null
     : browserTunnelTargetBlockReason(target.host, target.port)

@@ -15,6 +15,7 @@ export function LocalPortSection({
   onShowDetails,
   onOpenInBrowser,
   onForwardPort,
+  onCopyPublicUrl,
   isPortForwarded
 }: {
   id: string
@@ -28,6 +29,8 @@ export function LocalPortSection({
   onOpenInBrowser?: (port: WorkspacePort, event?: React.MouseEvent<HTMLButtonElement>) => void
   /** Absent when this client has no SSH forward route to the port's host. */
   onForwardPort?: (port: WorkspacePort) => void
+  /** Present only when the port's server publishes ports on a public route (Eclipse Che). */
+  onCopyPublicUrl?: (port: WorkspacePort) => void
   isPortForwarded?: (port: WorkspacePort) => boolean
 }): React.JSX.Element | null {
   if (ports.length === 0 && !emptyText) {
@@ -65,6 +68,7 @@ export function LocalPortSection({
                   onShowDetails={onShowDetails}
                   onOpenInBrowser={onOpenInBrowser}
                   onForward={isPortForwarded?.(port) ? undefined : onForwardPort}
+                  onCopyPublicUrl={onCopyPublicUrl}
                 />
               ))
             : emptyText && <div className="py-1 text-xs text-muted-foreground">{emptyText}</div>}

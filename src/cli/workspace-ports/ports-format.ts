@@ -30,7 +30,11 @@ function formatPortOwner(port: WorkspacePort, ambiguousNames: ReadonlySet<string
   return port.kind === 'container' ? 'workspace=(container)' : 'workspace=(none)'
 }
 
-function formatPortRow(port: WorkspacePort, ambiguousNames: ReadonlySet<string> | null): string {
+function formatPortRow(
+  port: WorkspacePort,
+  ambiguousNames: ReadonlySet<string> | null,
+  publicBaseUrl: string | undefined
+): string {
   return [
     String(port.port),
     ...(ambiguousNames ? [formatPortOwner(port, ambiguousNames)] : []),
@@ -39,7 +43,8 @@ function formatPortRow(port: WorkspacePort, ambiguousNames: ReadonlySet<string> 
     port.connectHost,
     port.protocol,
     ...(port.kind === 'workspace' ? [`match=${port.owner.confidence}`] : []),
-    ...(port.kind === 'workspace' && port.advertisedUrl ? [`url=${port.advertisedUrl}`] : [])
+    ...(port.kind === 'workspace' && port.advertisedUrl ? [`url=${port.advertisedUrl}`] : []),
+    ...(publicBaseUrl ? [`public=${publicBaseUrl}${port.port}/`] : [])
   ].join('  ')
 }
 
@@ -55,6 +60,6 @@ export function formatPortsScan(
     return `No listening ports found.\n${host}`
   }
   const ambiguousNames = options.showOwner ? findAmbiguousOwnerNames(scan.ports) : null
-  const rows = scan.ports.map((port) => formatPortRow(port, ambiguousNames))
+  const rows = scan.ports.map((port) => formatPortRow(port, ambiguousNames, scan.publicBaseUrl))
   return `${rows.join('\n')}\n\n${host}`
 }

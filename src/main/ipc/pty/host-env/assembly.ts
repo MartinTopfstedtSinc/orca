@@ -38,6 +38,7 @@ import { getClaudeHookPluginDir } from '../../../claude/hooks/claude-hook-plugin
 import { applyManagedDataAccountEnvironment } from '../../../managed-data-accounts/launch-environment'
 import { applyOpenCodeStatusPluginEnv, captureOpenCodeSourceConfig } from './opencode-config'
 import { applyRemoteViewerClipboardEnv } from './remote-viewer-clipboard-env'
+import { getChePortPublicUrls } from '../../../che/ports/che-port-exposure-registry'
 
 /** Mutate host-local PTY environment only for local execution; SSH cannot use these loopback endpoints or filesystem paths. */
 export function buildPtyHostEnv(
@@ -118,6 +119,8 @@ export function buildPtyHostEnv(
     }
   }
 
+  // Che servers publish ports under a path; dev servers need it as their base path.
+  Object.assign(baseEnv, getChePortPublicUrls()?.ptyEnv())
   // Remove inherited hook coordinates before injecting the owning pane's receiver.
   stripInheritedClaudePluginDir(baseEnv, CLAUDE_HOOK_PLUGIN_DIR_ENV)
   for (const key of AGENT_HOOK_RUNTIME_ENV_KEYS) {

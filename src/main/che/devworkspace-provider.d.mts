@@ -23,3 +23,7 @@ export class DevWorkspaceProvider {
   suspend(resource: Resource, signal?: AbortSignal): Promise<void>
   destroy(resource: Resource): Promise<void>
 }
+export class KubernetesClient {
+  constructor(env?: NodeJS.ProcessEnv)
+  request(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<unknown>
+}

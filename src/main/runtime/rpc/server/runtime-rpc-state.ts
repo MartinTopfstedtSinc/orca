@@ -51,6 +51,7 @@ import { DeclaredDesktopClients } from './pairing/declared-desktop-clients'
 import { AuthenticatedSourceRecorder } from './network-source-policy-store'
 import type { ServeNetworkSourceOptions } from './serve-network-source-policy'
 import type { WebSocketSourceGuard } from '../transports/websocket/source-admission/ws-network-source-guard'
+import { loadChePortRoutes } from '../../../che/ports/che-port-routes-loader'
 
 export class RuntimeRpcState {
   protected readonly runtime: OrcaRuntimeService
@@ -248,5 +249,10 @@ export class RuntimeRpcState {
     this.clientConnectionLog?.close()
     this.clientConnectionLog = new RuntimeClientConnectionLog()
     return this.clientConnectionLog
+  }
+
+  /** Che pods proxy their ports through the runtime listener; elsewhere this adds nothing. */
+  protected loadPortRoutes(): ReturnType<typeof loadChePortRoutes> {
+    return loadChePortRoutes(this.runtime)
   }
 }

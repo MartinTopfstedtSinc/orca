@@ -15,8 +15,10 @@ import type { RestoredPortForwardMove } from '../../../../shared/remote-runtime/
 import { forwardedTargetForRemoteUrl } from './workspace-port-urls'
 import { openForwardedUrlInSystemBrowser } from './forwarded-url-system-browser-open'
 import { openSystemHttpLink } from '@/lib/browser/navigation/http-link-routing'
+import { openRuntimeLoopbackPublicUrl } from './runtime-port-public-url'
 import {
   serverForwardsPorts,
+  serverPublishesPorts,
   serverSshForwardTargetId,
   sshForwardsPorts,
   workspaceRunsOnServer
@@ -32,11 +34,16 @@ export function portSystemBrowserOpener(
   if (target.kind === 'local') {
     return () => openSystemHttpLink(url)
   }
-  // A paired server's localhost reaches the system browser only through a forward of its port.
-  return serverForwardsPorts(target.environmentId) &&
-    isLoopbackBrowserUrl(url) &&
-    (worktreeId === null || workspaceRunsOnServer(target.environmentId, worktreeId))
-    ? () => openServerLoopbackInSystemBrowser(url, target.environmentId, worktreeId)
+  const onServer = worktreeId === null || workspaceRunsOnServer(target.environmentId, worktreeId)
+  if (!isLoopbackBrowserUrl(url) || !onServer) {
+    return null
+  }
+  // A forward keeps true localhost semantics; a Che server's public route is the fallback.
+  if (serverForwardsPorts(target.environmentId)) {
+    return () => openServerLoopbackInSystemBrowser(url, target.environmentId, worktreeId)
+  }
+  return serverPublishesPorts(target.environmentId)
+    ? () => openRuntimeLoopbackPublicUrl(url, target.environmentId)
     : null
 }
 
@@ -89,6 +96,10 @@ export async function openServerLoopbackInSystemBrowser(
       NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY
     ).catch(() => false))
   if (!api || !supported) {
+    if (serverPublishesPorts(environmentId)) {
+      await openRuntimeLoopbackPublicUrl(rawUrl, environmentId)
+      return
+    }
     toast.error(
       translate(
         'auto.lib.workspace.ports.serverPortForward.updateServer',

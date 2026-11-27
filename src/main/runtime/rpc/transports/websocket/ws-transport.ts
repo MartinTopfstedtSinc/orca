@@ -1,7 +1,7 @@
 // WebSocket transport letting mobile clients reach the Orca runtime over LAN (ws://); auth is per-device tokens, and E2EE runs above this layer.
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http'
 import type { Socket } from 'node:net'
-import { WebSocketServer, type WebSocket } from 'ws'
+import type { WebSocket, WebSocketServer } from 'ws'
 import type { RpcTransport } from '../../transport'
 import { answerWithoutWebClient, createStaticWebClientHandler } from './static-web-client-handler'
 import {
@@ -14,6 +14,11 @@ import {
 } from './node-websocket-lifecycle'
 import { RemoteRuntimeServerHeartbeat } from './remote-runtime-server-heartbeat'
 import { assertPortNotShadowingListener } from './shadowed-port-probe'
+import {
+  createRuntimeWebSocketServer,
+  withRuntimeHttpPortRoutes,
+  type RuntimeHttpPortRoutes
+} from './runtime-http-port-routes'
 import { REMOTE_RUNTIME_MAX_INBOUND_FRAME_BYTES } from '../../../../../shared/remote-runtime/remote-runtime-memory-limits'
 import {
   classifyNetworkSource,
@@ -47,6 +52,8 @@ export type WebSocketTransportOptions = {
   staticRoot?: string
   // Source-address policy checked at TCP accept; absent admits every source.
   sourceGuard?: WebSocketSourceGuard
+  // Che workspaces proxy their ports here; absent keeps every non-runtime request a static/404 answer.
+  portRoutes?: RuntimeHttpPortRoutes
   // Retry persisted fallback first so previously paired endpoints remain reachable (STA-1511).
   fallbackPort?: number
   // Explicit serve pins precede stale fallbacks (#8535); defaults retain fallback-first for pairings.
@@ -64,6 +71,7 @@ export class WebSocketTransport implements RpcTransport {
   private readonly preAuthTimeoutMs: number
   private readonly staticRoot: string | undefined
   private readonly sourceGuard: WebSocketSourceGuard | undefined
+  private readonly portRoutes: RuntimeHttpPortRoutes | undefined
   private readonly fallbackPort: number | undefined
   private readonly preferPinnedPort: boolean
   private readonly requirePinnedPort: boolean
@@ -93,6 +101,7 @@ export class WebSocketTransport implements RpcTransport {
     preAuthTimeoutMs,
     staticRoot,
     sourceGuard,
+    portRoutes,
     fallbackPort,
     preferPinnedPort,
     requirePinnedPort,
@@ -108,6 +117,7 @@ export class WebSocketTransport implements RpcTransport {
     this.preAuthTimeoutMs = preAuthTimeoutMs ?? PRE_AUTH_TIMEOUT_MS
     this.staticRoot = staticRoot
     this.sourceGuard = sourceGuard
+    this.portRoutes = portRoutes
     this.fallbackPort = fallbackPort
     this.preferPinnedPort = preferPinnedPort === true
     this.requirePinnedPort = requirePinnedPort === true
@@ -223,7 +233,10 @@ export class WebSocketTransport implements RpcTransport {
     await assertPortNotShadowingListener(this.host, port)
     // Without an HTTP request listener, plain HTTP hangs instead of receiving 404 (#30100).
     const httpServer = createHttpServer(
-      this.staticRoot ? createStaticWebClientHandler(this.staticRoot) : answerWithoutWebClient
+      withRuntimeHttpPortRoutes(
+        this.staticRoot ? createStaticWebClientHandler(this.staticRoot) : answerWithoutWebClient,
+        this.portRoutes
+      )
     )
 
     await new Promise<void>((resolve, reject) => {
@@ -245,10 +258,11 @@ export class WebSocketTransport implements RpcTransport {
       }
     })
 
-    const wss = new WebSocketServer({
-      server: httpServer,
-      maxPayload: WEBSOCKET_TRANSPORT_MAX_MESSAGE_BYTES
-    })
+    const wss = createRuntimeWebSocketServer(
+      httpServer,
+      this.portRoutes,
+      WEBSOCKET_TRANSPORT_MAX_MESSAGE_BYTES
+    )
 
     wss.on('connection', (ws, request) => {
       this.peers.set(ws, {
@@ -265,6 +279,7 @@ export class WebSocketTransport implements RpcTransport {
     this.httpServer = httpServer
     this.wss = wss
     this.releaseTunnelReservation = reserveBrowserTunnelOrcaListenerPort(this.resolvedPort)
+    this.portRoutes?.onListening?.(this.resolvedPort)
   }
 
   async stop(): Promise<void> {

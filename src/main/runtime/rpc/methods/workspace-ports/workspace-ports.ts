@@ -3,10 +3,12 @@ import {
   WorkspacePortKillHostParams,
   WorkspacePortKillParams,
   WorkspacePortProbePageParams,
+  WorkspacePortPublicUrlParams,
   WorkspacePortScanHostParams,
   WorkspacePortScanParams
 } from '../../../../../shared/rpc-contract/workspaces/workspace-ports-params'
 import { probeWorkspacePortPage } from '../../../../ports/workspace-port-page-probe'
+import { getChePortPublicUrls } from '../../../../che/ports/che-port-exposure-registry'
 
 export const WORKSPACE_PORT_METHODS = [
   defineMethod({
@@ -31,6 +33,18 @@ export const WORKSPACE_PORT_METHODS = [
     permission: 'workspace',
     params: WorkspacePortProbePageParams,
     handler: async (params) => probeWorkspacePortPage(params)
+  }),
+  defineMethod({
+    name: 'workspacePorts.publicUrl',
+    permission: 'workspace',
+    params: WorkspacePortPublicUrlParams,
+    handler: async (params) => {
+      const url = getChePortPublicUrls()?.publicUrl(params.port, params.path)
+      if (!url) {
+        throw new Error('public_port_url_unavailable')
+      }
+      return url
+    }
   }),
   defineMethod({
     name: 'workspacePorts.scanHost',

@@ -1,4 +1,10 @@
-import { NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY } from '../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
+import {
+  NETWORK_PORT_FORWARD_RUNTIME_CAPABILITY,
+  WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY
+} from '../../../../shared/remote-runtime/protocol/workspace-ports-runtime-capabilities'
+import { isWebClientLocation } from '@/app-shell/platform/web-client-location'
+import { BROWSER_SCREENCAST_RUNTIME_CAPABILITY } from '../../../../shared/browser/runtime/browser-runtime-capabilities'
+import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import { readCachedRuntimeEnvironmentCapability } from '@/runtime/rpc/compatibility/runtime-compatibility-cache'
 import { resolveOwner } from '@/lib/workspace/ownership/resolve-owner'
 import type { WorktreeOperationRouteState } from '@/lib/workspace/ownership/worktree-operation-route'
@@ -54,6 +60,30 @@ export function serverForwardsPorts(environmentId: string): boolean {
   )
 }
 
+/** Whether the paired server publishes its localhost ports on a public route (Eclipse Che). */
+export function serverPublishesPorts(environmentId: string): boolean {
+  return (
+    readCachedRuntimeEnvironmentCapability(
+      environmentId,
+      WORKSPACE_PORTS_PUBLIC_URL_RUNTIME_CAPABILITY
+    ) === true
+  )
+}
+
+/** The web client hosts no pages, so without a server browser a Che server's ports open at its
+ *  public route in a real browser tab rather than in a built-in tab that would stay blank. */
+export function serverPortsOpenOnlyOutsideOrca(target: RuntimeClientTarget): boolean {
+  return (
+    target.kind === 'environment' &&
+    isWebClientLocation() &&
+    serverPublishesPorts(target.environmentId) &&
+    readCachedRuntimeEnvironmentCapability(
+      target.environmentId,
+      BROWSER_SCREENCAST_RUNTIME_CAPABILITY
+    ) !== true
+  )
+}
+
 /** The workspace runs on the paired server itself; one on an SSH host or WSL distro the server reaches has another localhost. */
 export function workspaceRunsOnServer(
   environmentId: string,
@@ -79,4 +109,15 @@ export function serverForwardsWorkspacePorts(
   worktreeId: string | null | undefined
 ): boolean {
   return serverForwardsPorts(environmentId) && workspaceRunsOnServer(environmentId, worktreeId)
+}
+
+/** A link to this workspace's server localhost opens at the server's public route from this client. */
+export function serverPublishesWorkspacePortsHere(
+  environmentId: string,
+  worktreeId: string | null | undefined
+): boolean {
+  return (
+    serverPortsOpenOnlyOutsideOrca({ kind: 'environment', environmentId }) &&
+    (!worktreeId || workspaceRunsOnServer(environmentId, worktreeId))
+  )
 }
