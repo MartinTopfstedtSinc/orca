@@ -62,3 +62,14 @@ export function readProjectionMobileSnapshots(
   }
   return data.mobileOutputs
 }
+
+/** Pane keys behind dashboardCounts().attention: the agents in the Needs You bucket. */
+export function readProjectionAttentionKeys(data: AgentStatusProjectionState): string[] {
+  const keys: string[] = []
+  for (const [key, row] of data.countedRows) {
+    if (row.bucket === 'attention' && data.activeDashboardOwners.has(row.owner)) {
+      keys.push(key)
+    }
+  }
+  return keys
+}

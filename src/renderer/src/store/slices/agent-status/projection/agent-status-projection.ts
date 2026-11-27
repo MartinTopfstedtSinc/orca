@@ -27,6 +27,7 @@ import {
 import { AgentStatusProjectionState } from './agent-status-projection-state'
 import {
   readProjectionAttention,
+  readProjectionAttentionKeys,
   readProjectionMobileSnapshots
 } from './agent-status-projection-reads'
 import { projectionEvictionKeys } from './agent-status-projection-capacity'
@@ -59,6 +60,7 @@ export class AgentStatusProjection {
   dashboardCounts(): DashboardCounts {
     return this.data.dashboardTotals
   }
+  attentionKeys = (): string[] => readProjectionAttentionKeys(this.data)
   terminalLeafAgentTypes(tabId: string) {
     return readTerminalLeafAgentTypes(this.data, tabId)
   }

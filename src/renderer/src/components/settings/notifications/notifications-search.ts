@@ -253,3 +253,20 @@ export const getNotificationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   }
 ])
+
+export const getWebNotificationsSearchEntries = createLocalizedCatalog(() => [
+  {
+    title: translate('web.settings.notifications.label', 'Browser notifications'),
+    description: translate(
+      'web.settings.notifications.description',
+      'While this tab is in the background, notify when an agent or bot starts needing you.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.notifications.search.ca8faa40d7',
+        'notifications'
+      ),
+      ...translateSearchKeyword('web.settings.notifications.search.browser', 'browser')
+    ]
+  }
+])

@@ -7,7 +7,10 @@ import { getChatInlineVisualsSearchEntry } from '@/components/settings/chat/chat
 import { getChatLaunchSearchEntries } from '@/components/settings/chat/chat-launch-search'
 import { getChatPermissionSearchEntry } from '@/components/settings/chat/chat-permission-search'
 import { getInputPaneSearchEntries } from '@/components/settings/input/input-search'
-import { getNotificationsPaneSearchEntries } from '@/components/settings/notifications/notifications-search'
+import {
+  getNotificationsPaneSearchEntries,
+  getWebNotificationsSearchEntries
+} from '@/components/settings/notifications/notifications-search'
 import { getShortcutsPaneSearchEntries } from '@/components/settings/shortcuts/shortcuts-search'
 import { getStatsPaneSearchEntries } from '@/components/stats/stats-search'
 import { translate } from '@/i18n/i18n'
@@ -78,21 +81,24 @@ export function buildInterfaceSettingsSections(
       searchEntries: getInputPaneSearchEntries(),
       group: 'interface'
     },
-    ...(showDesktopOnlySettings
-      ? [
-          {
-            id: 'notifications',
-            title: t('auto.hooks.useSettingsNavigationMetadata.2eece16ad1', 'Notifications'),
-            description: t(
-              'auto.hooks.useSettingsNavigationMetadata.7682607591',
-              'Native desktop notifications for agent and terminal events.'
-            ),
-            icon: Bell,
-            searchEntries: getNotificationsPaneSearchEntries(),
-            group: 'interface'
-          }
-        ]
-      : []),
+    {
+      id: 'notifications',
+      title: t('auto.hooks.useSettingsNavigationMetadata.2eece16ad1', 'Notifications'),
+      description: showDesktopOnlySettings
+        ? t(
+            'auto.hooks.useSettingsNavigationMetadata.7682607591',
+            'Native desktop notifications for agent and terminal events.'
+          )
+        : t(
+            'web.settings.notifications.navDescription',
+            'Browser notifications while Orca is in a background tab.'
+          ),
+      icon: Bell,
+      searchEntries: showDesktopOnlySettings
+        ? getNotificationsPaneSearchEntries()
+        : getWebNotificationsSearchEntries(),
+      group: 'interface'
+    },
     {
       id: 'shortcuts',
       title: t('auto.hooks.useSettingsNavigationMetadata.94295ebfb3', 'Shortcuts'),
