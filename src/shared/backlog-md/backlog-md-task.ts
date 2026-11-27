@@ -75,12 +75,16 @@ export function parseBacklogMdTask(content: string, fileName: string): BacklogMd
   }
 }
 
+function isYamlMapping(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 export function parseBacklogMdConfig(content: string): BacklogMdConfig {
   let data: Record<string, unknown> = {}
   try {
     const parsed: unknown = parseYaml(content)
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      data = parsed as Record<string, unknown>
+    if (isYamlMapping(parsed)) {
+      data = parsed
     }
   } catch {
     // A broken config still leaves the tasks readable with the default statuses.
@@ -96,9 +100,7 @@ export function parseBacklogMdConfig(content: string): BacklogMdConfig {
 function parseFrontmatterFields(source: string): Record<string, unknown> {
   try {
     const parsed: unknown = parseYaml(quoteBareMentions(source))
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {}
+    return isYamlMapping(parsed) ? parsed : {}
   } catch {
     return {}
   }
